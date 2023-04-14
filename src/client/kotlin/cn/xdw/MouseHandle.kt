@@ -1,5 +1,6 @@
 package cn.xdw
 
+import cn.xdw.data.ItemGroupList.Companion.currentItemGroup
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW
@@ -13,7 +14,7 @@ class MouseHandle {
             if (client.currentScreen != null) return
             InputUtil.isKeyPressed(client.window.handle, GLFW.GLFW_KEY_LEFT_ALT).takeIf { it }?.let {
                 info.cancel()
-                ColorWheelHud.curIndex = (ColorWheelHud.curIndex+vertical.toInt()).coerceIn(0,16)
+                currentItemGroup.cursor = (currentItemGroup.cursor+vertical.toInt()).coerceIn(0,currentItemGroup.items.size-1)
             }
             val a = 1
         }
