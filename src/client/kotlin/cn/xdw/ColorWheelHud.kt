@@ -2,6 +2,9 @@ package cn.xdw
 
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.render.Tessellator
+import net.minecraft.client.render.VertexFormat
+import net.minecraft.client.render.VertexFormats
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
@@ -22,5 +25,12 @@ class ColorWheelHud:HudRenderCallback {
             itemRenderer.renderInGuiWithOverrides(item, i, j)
             itemRenderer.renderGuiItemOverlay(client.textRenderer,item, i, j)
         }
+        matrixStack?.pop()
+        matrixStack?.push()
+        val textRenderer = MinecraftClient.getInstance().textRenderer
+        val u = (x - textRenderer.getWidth("Hello World")) / 2
+        val v = y / 2 - 4
+        textRenderer.draw(matrixStack, "Hello World", u.toFloat(), v.toFloat(), 0xFFFFFF)
+        matrixStack?.pop()
     }
 }
