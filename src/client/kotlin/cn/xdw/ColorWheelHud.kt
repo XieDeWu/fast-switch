@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.InputUtil
 import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
 import net.minecraft.util.Identifier
 import net.minecraft.util.registry.Registry
@@ -13,6 +14,7 @@ import org.lwjgl.glfw.GLFW
 
 
 class ColorWheelHud:HudRenderCallback {
+    @Suppress("NestedLambdaShadowedImplicitParameter")
     override fun onHudRender(matrixStack: MatrixStack?, tickDelta: Float) {
         val client = MinecraftClient.getInstance()
         if(!InputUtil.isKeyPressed(client.window.handle, GLFW.GLFW_KEY_LEFT_ALT)) return
@@ -30,12 +32,27 @@ class ColorWheelHud:HudRenderCallback {
                     itemRenderer.renderInGuiWithOverrides(item, i, j)
                     itemRenderer.renderGuiItemOverlay(client.textRenderer,item, i, j)
             }
-            val flag = "^" to 0xFFFF00
-            val textRenderer = client.textRenderer
-            val u = (x - textRenderer.getWidth(flag.first)) / 2 + 1
-            val v = 16*3+y/2-7
-            textRenderer.draw(matrixStack, flag.first, u.toFloat(), v.toFloat(), flag.second)
-            textRenderer.draw(matrixStack, KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.tickNum.toString(), u.toFloat(), v.toFloat()+16, flag.second)
+            val drawIterator = { initPos:Int->
+                var index = initPos
+                { text:String,color:Int->
+                    val textRenderer = client.textRenderer
+                    val u = (x - textRenderer.getWidth(text)) / 2 + 1
+                    val v = 16*index+y/2-7
+                    textRenderer.draw(matrixStack, text, u.toFloat(), v.toFloat(), color)
+                    index+=1
+                }
+            }
+            drawIterator(3).let {
+                it("^",0xFFFF00)
+                it(KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.tickNum.toString(),0xFFFF00)
+                val draw = it
+                client.player?.let { (it.mainHandStack.item as? BlockItem)
+                    ?.let { it.block.defaultState.registryEntry.streamTags()
+                        .map { it.id.toString() }
+                        .reduce{acc,key->"$acc,$key"}
+                    }?.let { draw(it.get(),0xFFFF00) }
+                }
+            }
             matrixStack?.pop()
         }
     }
