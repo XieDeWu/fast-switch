@@ -17,7 +17,7 @@ class ColorWheelHud:HudRenderCallback {
     @Suppress("NestedLambdaShadowedImplicitParameter")
     override fun onHudRender(matrixStack: MatrixStack?, tickDelta: Float) {
         val client = MinecraftClient.getInstance()
-        if(!InputUtil.isKeyPressed(client.window.handle, GLFW.GLFW_KEY_LEFT_ALT)) return
+        if(KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.isPress() != true) return
         val x = client.window.scaledWidth
         val y = client.window.scaledHeight
 

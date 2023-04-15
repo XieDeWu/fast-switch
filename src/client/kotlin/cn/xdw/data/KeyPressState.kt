@@ -1,8 +1,6 @@
 package cn.xdw.data
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTick
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.StartTick
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.option.KeyBinding
@@ -32,6 +30,7 @@ class KeyPressState{
     companion object{
         var keyState = mutableMapOf(
             GLFW.GLFW_KEY_LEFT_ALT.let { it to KeyPress(it,"key.example.alt") },
+            GLFW.GLFW_KEY_LEFT_SHIFT.let { it to KeyPress(it,"key.example.shift") },
             GLFW.GLFW_KEY_LEFT_CONTROL.let { it to KeyPress(it,"key.example.ctrl") },
         )
         fun register(){
