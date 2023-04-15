@@ -1,6 +1,6 @@
 package cn.xdw.mixin.client;
 
-import cn.xdw.MouseHandle;
+import cn.xdw.handle.MouseHandle;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

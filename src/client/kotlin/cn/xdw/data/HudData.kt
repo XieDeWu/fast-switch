@@ -1,7 +1,7 @@
 package cn.xdw.data
 
 import net.minecraft.item.BlockItem
-import net.minecraft.item.Item
+import net.minecraft.item.Item as MItem
 import net.minecraft.util.Identifier
 import net.minecraft.util.registry.Registry
 
@@ -9,7 +9,7 @@ import net.minecraft.util.registry.Registry
 class HudData {
     data class Item(
         val id:String = "",
-        val item: net.minecraft.item.Item = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
+        val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
         var count: Int = 1,
         var tag: (Int) -> String = run {
             val tags = (item as BlockItem).let { it ->

@@ -1,7 +1,7 @@
 package cn.xdw
 
 import cn.xdw.data.HudData
-import cn.xdw.data.KeyPressState
+import cn.xdw.data.KeyData
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.math.MatrixStack
@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW
 class ColorWheelHud:HudRenderCallback {
     override fun onHudRender(matrixStack: MatrixStack?, tickDelta: Float) {
         val client = MinecraftClient.getInstance()
-        if(KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.isPress() != true) return
+        if(KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.isPress() != true) return
         val x = client.window.scaledWidth
         val y = client.window.scaledHeight
 
@@ -41,7 +41,7 @@ class ColorWheelHud:HudRenderCallback {
             drawIterator(3).let {
                 it("^",0xFFFF00)
                 it(cursor.second.tag(0),0xFFFF00)
-                it(KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.tickNum.toString(),0xFFFF00)
+                it(KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.let { it.pressHandle(null) }.toString(),0xFFFF00)
             }
             matrixStack?.pop()
         }
