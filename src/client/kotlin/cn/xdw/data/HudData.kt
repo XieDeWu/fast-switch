@@ -1,28 +1,36 @@
 package cn.xdw.data
 
 import net.minecraft.item.BlockItem
+import net.minecraft.item.Item
 import net.minecraft.util.Identifier
 import net.minecraft.util.registry.Registry
 
 
 class HudData {
     data class Item(
-        var id:String = "",
+        val id:String = "",
+        val item: net.minecraft.item.Item = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
         var count: Int = 1,
         var tag: (Int) -> String = run {
-            val tags = (Registry.ITEM.get(Identifier.tryParse(id)) as BlockItem).let { it ->
+            val tags = (item as BlockItem).let { it ->
                 it.block.defaultState.registryEntry.streamTags().map { it.id.toString() }.toList()
             }
             var tagIndex = 0
             ({ offset: Int ->
-                tagIndex = ((tagIndex+offset)%tags.size).coerceIn(0, tags.size)
+                tagIndex = (tagIndex+offset).coerceIn(0, tags.size-1)
                 tags[tagIndex]
             })
         }
     )
     data class ItemGroup(
         var items: MutableList<Item> = mutableListOf(),
-        var cursor: Int = (items.size + 1) / 2,
+        var offset: (Int) -> Pair<Int, Item> = run {
+            var cursor = (items.size+1)/2
+            ({offset:Int->
+                cursor = (cursor+offset).coerceIn(0, items.size-1)
+                cursor to items[cursor]
+            })
+        },
     )
     companion object{
         var currentItemGroup: ItemGroup = ItemGroup(mutableListOf(

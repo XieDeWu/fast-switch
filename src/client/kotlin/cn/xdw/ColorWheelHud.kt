@@ -5,15 +5,11 @@ import cn.xdw.data.KeyPressState
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.math.MatrixStack
-import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
-import net.minecraft.util.Identifier
-import net.minecraft.util.registry.Registry
 import org.lwjgl.glfw.GLFW
 
 
 class ColorWheelHud:HudRenderCallback {
-    @Suppress("NestedLambdaShadowedImplicitParameter")
     override fun onHudRender(matrixStack: MatrixStack?, tickDelta: Float) {
         val client = MinecraftClient.getInstance()
         if(KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.isPress() != true) return
@@ -22,10 +18,11 @@ class ColorWheelHud:HudRenderCallback {
 
         HudData.currentItemGroup.let { it ->
             matrixStack?.push()
+            val cursor = it.offset(0)
             it.items
-                .map { ItemStack(Registry.ITEM.getOrEmpty(Identifier(it.id)).orElse(null),it.count) }
+                .map { ItemStack(it.item,it.count) }
                 .forEachIndexed { index, item ->
-                    val i = 16 * (index - it.cursor) + x / 2 - 8
+                    val i = 16 * (index - cursor.first) + x / 2 - 8
                     val j = 16*2+y/2-8
                     val itemRenderer = client.itemRenderer
                     itemRenderer.renderInGuiWithOverrides(item, i, j)
@@ -43,14 +40,8 @@ class ColorWheelHud:HudRenderCallback {
             }
             drawIterator(3).let {
                 it("^",0xFFFF00)
+                it(cursor.second.tag(0),0xFFFF00)
                 it(KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.tickNum.toString(),0xFFFF00)
-                val draw = it
-                client.player?.let { (it.mainHandStack.item as? BlockItem)
-                    ?.let { it.block.defaultState.registryEntry.streamTags()
-                        .map { it.id.toString() }
-                        .reduce{acc,key->"$acc,$key"}
-                    }?.let { draw(it.get(),0xFFFF00) }
-                }
             }
             matrixStack?.pop()
         }
