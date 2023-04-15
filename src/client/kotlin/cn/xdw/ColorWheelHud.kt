@@ -1,6 +1,7 @@
 package cn.xdw
 
 import cn.xdw.data.ItemGroupList
+import cn.xdw.data.KeyPressState
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.InputUtil
@@ -28,13 +29,13 @@ class ColorWheelHud:HudRenderCallback {
                     val itemRenderer = client.itemRenderer
                     itemRenderer.renderInGuiWithOverrides(item, i, j)
                     itemRenderer.renderGuiItemOverlay(client.textRenderer,item, i, j)
-
-                    val flag = "^" to 0xFFFF00
-                    val textRenderer = client.textRenderer
-                    val u = (x - textRenderer.getWidth(flag.first)) / 2 + 1
-                    val v = 16*3+y/2-7
-                    textRenderer.draw(matrixStack, flag.first, u.toFloat(), v.toFloat(), flag.second)
             }
+            val flag = "^" to 0xFFFF00
+            val textRenderer = client.textRenderer
+            val u = (x - textRenderer.getWidth(flag.first)) / 2 + 1
+            val v = 16*3+y/2-7
+            textRenderer.draw(matrixStack, flag.first, u.toFloat(), v.toFloat(), flag.second)
+            textRenderer.draw(matrixStack, KeyPressState.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.tickNum.toString(), u.toFloat(), v.toFloat()+16, flag.second)
             matrixStack?.pop()
         }
     }
