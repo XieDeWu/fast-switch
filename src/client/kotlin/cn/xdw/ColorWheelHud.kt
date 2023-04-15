@@ -1,10 +1,9 @@
 package cn.xdw
 
-import cn.xdw.data.ItemGroupList
+import cn.xdw.data.HudData
 import cn.xdw.data.KeyPressState
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.util.InputUtil
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
@@ -21,7 +20,7 @@ class ColorWheelHud:HudRenderCallback {
         val x = client.window.scaledWidth
         val y = client.window.scaledHeight
 
-        ItemGroupList.currentItemGroup.let { it ->
+        HudData.currentItemGroup.let { it ->
             matrixStack?.push()
             it.items
                 .map { ItemStack(Registry.ITEM.getOrEmpty(Identifier(it.id)).orElse(null),it.count) }

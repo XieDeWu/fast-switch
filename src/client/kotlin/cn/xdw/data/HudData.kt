@@ -1,9 +1,24 @@
 package cn.xdw.data
 
-class ItemGroupList {
+import net.minecraft.item.BlockItem
+import net.minecraft.util.Identifier
+import net.minecraft.util.registry.Registry
+
+
+class HudData {
     data class Item(
         var id:String = "",
         var count: Int = 1,
+        var tag: (Int) -> String = run {
+            val tags = (Registry.ITEM.get(Identifier.tryParse(id)) as BlockItem).let { it ->
+                it.block.defaultState.registryEntry.streamTags().map { it.id.toString() }.toList()
+            }
+            var tagIndex = 0
+            ({ offset: Int ->
+                tagIndex = ((tagIndex+offset)%tags.size).coerceIn(0, tags.size)
+                tags[tagIndex]
+            })
+        }
     )
     data class ItemGroup(
         var items: MutableList<Item> = mutableListOf(),
