@@ -20,7 +20,7 @@ class HudData {
                 tagIndex = (tagIndex+offset).coerceIn(0, tags.size-1)
                 tags[tagIndex]
             })
-        }
+        },
     )
     data class ItemGroup(
         var items: MutableList<Item> = mutableListOf(),
@@ -31,6 +31,13 @@ class HudData {
                 cursor to items[cursor]
             })
         },
+        var switchDisplay: (Boolean) -> Boolean = run {
+            var display = false
+            {
+                display = when{it->!display else->display}
+                display
+            }
+        }
     )
     companion object{
         var currentItemGroup: ItemGroup = ItemGroup(mutableListOf(

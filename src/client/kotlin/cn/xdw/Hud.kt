@@ -9,10 +9,10 @@ import net.minecraft.item.ItemStack
 import org.lwjgl.glfw.GLFW
 
 
-class ColorWheelHud:HudRenderCallback {
+class Hud:HudRenderCallback {
     override fun onHudRender(matrixStack: MatrixStack?, tickDelta: Float) {
+        if(!HudData.currentItemGroup.switchDisplay(false)) return
         val client = MinecraftClient.getInstance()
-        if(KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.isPress() != true) return
         val x = client.window.scaledWidth
         val y = client.window.scaledHeight
 
