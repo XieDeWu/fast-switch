@@ -64,6 +64,7 @@ class KeyData{
             GLFW.GLFW_KEY_LEFT_ALT.let { it to KeyPress(it,"key.example.alt") },
             GLFW.GLFW_KEY_LEFT_SHIFT.let { it to KeyPress(it,"key.example.shift") },
             GLFW.GLFW_KEY_LEFT_CONTROL.let { it to KeyPress(it,"key.example.ctrl") },
+            GLFW.GLFW_KEY_V.let { it to KeyPress(it,"key.example.v") },
         )
         fun register(){
             val isPress = { client:MinecraftClient, code:Int->InputUtil.isKeyPressed(client.window.handle,code)}

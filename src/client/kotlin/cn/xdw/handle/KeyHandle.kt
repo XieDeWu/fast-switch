@@ -1,7 +1,9 @@
 package cn.xdw.handle
 
+import cn.xdw.data.HudData
 import cn.xdw.data.HudData.Companion.currentItemGroup
 import cn.xdw.data.KeyData
+import net.minecraft.client.MinecraftClient
 import org.lwjgl.glfw.GLFW
 
 class KeyHandle {
@@ -10,6 +12,26 @@ class KeyHandle {
             KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.apply {
                 onShortClick = {
                     currentItemGroup.switchDisplay(true)
+                    Unit
+                }
+            }
+            KeyData.keyState[GLFW.GLFW_KEY_V]?.apply {
+                onShortClick = {
+                    val display = currentItemGroup.switchDisplay(false)
+                    val inventory = MinecraftClient.getInstance().player?.inventory
+                    when{
+                        inventory!=null->{
+                            currentItemGroup = HudData.ItemGroup(
+                                (0..8)
+                                .map { inventory.getStack(it) }
+                                .filter { !it.isEmpty }
+                                .map { HudData.Item(id = it.registryEntry.key.get().value.toString(), count = it.count) }
+                                .toMutableList()
+                            )
+                            currentItemGroup.switchDisplay(true)
+                            val a = 1
+                        }
+                    }
                     Unit
                 }
             }

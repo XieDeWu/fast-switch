@@ -41,7 +41,7 @@ class Hud:HudRenderCallback {
             drawIterator(3).let {
                 it("^",0xFFFF00)
                 it(cursor.second.tag(0),0xFFFF00)
-                it(KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.let { it.pressHandle(null) }.toString(),0xFFFF00)
+//                it(KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.let { it.pressHandle(null) }.toString(),0xFFFF00)
             }
             matrixStack?.pop()
         }

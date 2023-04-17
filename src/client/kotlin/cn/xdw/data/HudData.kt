@@ -19,18 +19,19 @@ class HudData {
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
         var count: Int = 1,
         var tag: (Int) -> String = run {
-            val tags = (item as BlockItem).let { it ->
-                it.block.defaultState.registryEntry.streamTags().map { it.id.toString() }.toList()
-            }
+            val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList()
             var tagIndex = 0
-            ({ offset: Int ->
-                tagIndex = (tagIndex+offset).coerceIn(0, tags.size-1)
-                tags[tagIndex]
-            })
+            {when{
+                tags.size > 0 ->{
+                    tagIndex = (tagIndex + it).coerceIn(0, tags.size - 1)
+                    tags[tagIndex]
+                }
+                else->"Null Tag"
+            } }
         },
     )
     data class ItemGroup(
-        var items: MutableList<Item> = mutableListOf(),
+        var items: MutableList<Item>,
         var switchDisplay: (Boolean) -> Boolean = run {
             var display = false
             {
