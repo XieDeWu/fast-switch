@@ -1,6 +1,9 @@
 package cn.xdw.data
 
+import net.minecraft.client.MinecraftClient
 import net.minecraft.item.BlockItem
+import net.minecraft.item.ItemStack
+import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.item.Item as MItem
 import net.minecraft.util.Identifier
 import net.minecraft.util.registry.Registry
@@ -28,13 +31,6 @@ class HudData {
     )
     data class ItemGroup(
         var items: MutableList<Item> = mutableListOf(),
-        var offset: (Int) -> Pair<Int, Item> = run {
-            var cursor = (items.size+1)/2
-            ({offset:Int->
-                cursor = (cursor+offset).coerceIn(0, items.size-1)
-                cursor to items[cursor]
-            })
-        },
         var switchDisplay: (Boolean) -> Boolean = run {
             var display = false
             {
@@ -42,7 +38,32 @@ class HudData {
                 display
             }
         },
-        val perlinNextItem:()->Item = run {
+        val switchItem: (MItem)->Unit = {
+            val client = MinecraftClient.getInstance()
+            val player = client.player
+            val inventory = player?.inventory
+            val inter = client.interactionManager
+            when{
+                client!=null && player!=null && inventory!=null && inter !=null ->{
+                    inter.clickSlot(player.currentScreenHandler.syncId, inventory.selectedSlot + 36, 0, SlotActionType.QUICK_MOVE, client.player)
+                    player.dropSelectedItem(true)
+                    val slot: Int = inventory.getSlotWithStack(ItemStack(it))
+                    if (slot>=0 && slot!= inventory.selectedSlot) {
+                        inter.pickFromInventory(slot)
+                    }
+                }
+            }
+        },
+        var offset: (Int) -> Pair<Int, Item> = run {
+            var cursor = (items.size+1)/2
+            {
+                cursor = (cursor+it).coerceIn(0, items.size-1)
+                val rt = cursor to items[cursor]
+                if(it!=0) switchItem(rt.second.item)
+                rt
+            }
+        },
+        val perlinNextItem:()->Unit = run {
             val perlin1d: (Int)->(Double)->Double = { seed->run {
                 val ease = { y0: Double, y1: Double, t: Double ->
                     val t3 = t.pow(3)
@@ -60,16 +81,20 @@ class HudData {
                 }
             } }
             var x = .0
-            {when{
-                items.size > 0->{
-                    val weightSum = items.fold(0){acc,next->acc+next.count }
-                    val hz = (3+2*ln(weightSum.toDouble().coerceAtLeast(1.0)) )
-                    x += 1/hz
-                    items.mapIndexed{index,t-> t to (t.count * perlin1d(weightSum + index)(x)) }
-                        .sortedBy { it.second }[0].first
+            {
+                val curIndex = offset(0).first
+                when{
+                    items.size > 0 ->{
+                        val weightSum = items.fold(0){acc,next->acc+next.count }
+                        val hz = (3+2*ln(weightSum.toDouble().coerceAtLeast(1.0)) )
+                        x += 1/hz
+                        val targetIndex = items
+                            .mapIndexed{index,t-> index to (t.count * perlin1d(weightSum + index)(x)) }
+                            .sortedByDescending { it.second }[0].first
+                        offset(targetIndex-curIndex)
+                    }
                 }
-                else->Item()
-            }}
+            }
         },
         val randomNextItem:()->Item = {when{items.size>0->items[Random.nextInt(items.size-1)] else->Item()}},
     )
