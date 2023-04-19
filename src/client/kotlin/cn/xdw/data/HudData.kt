@@ -65,38 +65,66 @@ class HudData {
             }
         },
         val perlinNextItem:()->Unit = run {
-            val perlin1d: (Int)->(Double)->Double = { seed->run {
-                val ease = { y0: Double, y1: Double, t: Double ->
-                    val t3 = t.pow(3)
-                    val t4 = t3 * t
-                    val t5 = t4 * t
-                    ((6 * t5 - 15 * t4 + 10 * t3) * y1 + (-6 * t5 + 15 * t4 - 10 * t3 + 1) * y0)
-                }
+            val generate1DNoise: (Int, Double, Double, Double, Int) -> (Double) -> Double = { seed, frequency, lacunarity, persistence, octaves -> run {
+                val rng = Random(seed)
+                val randInt = { rng.nextInt() }
+                val scale = 1 / (2.0 - 1.0 / lacunarity)
+                val octavesPow = (0 until octaves).map { lacunarity.pow(it) }
+                val totalWeight = octavesPow.sum();
                 { x: Double ->
-                    val x0 = floor(x).toInt()
-                    val x1 = x0 + 1
-                    val f0 = Random(seed+x0).nextDouble()
-                    val f1 = Random(seed+x1).nextDouble()
-                    val t = x - x0
-                    ease(f0, f1, t)
+                    var noise = 0.0
+                    var amplitude = 1.0
+
+                    for (i in 0 until octaves) {
+                        val sampleX = x * frequency * octavesPow[i]
+                        val n = (randInt() xor sampleX.toInt())
+                        noise += n * amplitude
+                        amplitude *= persistence
+                    }
+                    noise * scale / totalWeight
                 }
             } }
+            val perlin1D = generate1DNoise(233,0.02,3.0,0.6,6)
             var x = .0
             {
-                val curIndex = offset(0).first
-                when{
-                    items.size > 0 ->{
-                        val weightSum = items.fold(0){acc,next->acc+next.count }
-                        val hz = (3+2*ln(weightSum.toDouble().coerceAtLeast(1.0)) )
-                        x += 1/hz
-                        val targetIndex = items
-                            .mapIndexed{index,t-> index to (t.count * perlin1d(weightSum + index)(x)) }
-                            .sortedByDescending { it.second }[0].first
-                        offset(targetIndex-curIndex)
-                    }
-                }
+                x += 1
+
             }
         },
+
+//        val perlinNextItem:()->Unit = run {
+//            val perlin1d: (Int)->(Double)->Double = { seed->run {
+//                val ease = { y0: Double, y1: Double, t: Double ->
+//                    val t3 = t.pow(3)
+//                    val t4 = t3 * t
+//                    val t5 = t4 * t
+//                    ((6 * t5 - 15 * t4 + 10 * t3) * y1 + (-6 * t5 + 15 * t4 - 10 * t3 + 1) * y0)
+//                }
+//                { x: Double ->
+//                    val x0 = floor(x).toInt()
+//                    val x1 = x0 + 1
+//                    val f0 = Random(seed+x0).nextDouble()
+//                    val f1 = Random(seed+x1).nextDouble()
+//                    val t = x - x0
+//                    ease(f0, f1, t)
+//                }
+//            } }
+//            var x = .0
+//            {
+//                val curIndex = offset(0).first
+//                when{
+//                    items.size > 0 ->{
+//                        val weightSum = items.fold(0){acc,next->acc+next.count }
+//                        val hz = (1+0.3*ln(weightSum.toDouble().coerceAtLeast(1.0)) )
+//                        x += 1/hz
+//                        val targetIndex = items
+//                            .mapIndexed{index,t-> index to (ln(t.count.toDouble().coerceAtLeast(1.0)) * perlin1d(weightSum + index)(x)) }
+//                            .sortedByDescending { it.second }[0].first
+//                        offset(targetIndex-curIndex)
+//                    }
+//                }
+//            }
+//        },
         val randomNextItem:()->Item = {when{items.size>0->items[Random.nextInt(items.size-1)] else->Item()}},
     )
     companion object{
