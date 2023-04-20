@@ -14,7 +14,7 @@ class Hud:HudRenderCallback {
         val x = client.window.scaledWidth
         val y = client.window.scaledHeight
 
-        HudData.currentItemGroup.let { it ->
+        HudData.currentItemGroup.takeIf { it.items.isNotEmpty() }?.let { it ->
             matrixStack?.push()
             val cursor = it.offset(0)
             it.items

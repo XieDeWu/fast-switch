@@ -90,8 +90,7 @@ class HudData {
             } }
             var callNum = 0
             {
-                ++callNum
-                if(items.size > 0){
+                if(items.isNotEmpty()){
                     val seed = items.fold(233){old,new->old xor new.count}
                     val sum = items.sumOf { it.count }
                     val noises = noiseSampler(seed.toLong(),sum)
@@ -100,6 +99,7 @@ class HudData {
                     val currentCursor = offset(0).first
                     val targetCursor = placeList[callNum % placeList.size]
                     offset(targetCursor-currentCursor)
+                    ++callNum
                 }
             }
         },
