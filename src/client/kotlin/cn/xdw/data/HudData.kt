@@ -3,6 +3,7 @@ package cn.xdw.data
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.item.Item as MItem
 import net.minecraft.util.Identifier
@@ -20,24 +21,21 @@ class HudData {
     data class Item(
         val id:String = "minecraft:air",
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
-        var count: Int = 1,
-        var tag: (Int) -> String = run {
-            val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList()
+        val count: Int = 1,
+        val tag: (Int) -> String = run {
+            val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList().takeIf { it.isNotEmpty() }
                 ?: (item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()
                 ?: listOf("Null Tags")
             var tagIndex = 0
-            {when{
-                tags.isNotEmpty() ->{
-                    tagIndex = (tagIndex + it).coerceIn(tags.indices)
-                    tags[tagIndex]
-                }
-                else->"Null Tag"
-            } }
+            {
+                tagIndex = (tagIndex + it).coerceIn(tags.indices)
+                tags[tagIndex]
+            }
         },
     )
     data class ItemGroup(
-        var items: MutableList<Item>,
-        var switchDisplay: (Boolean) -> Boolean = run {
+        val items: List<Item>,
+        val switchDisplay: (Boolean) -> Boolean = run {
             var display = false
             {
                 display = when{it->!display else->display}
@@ -60,7 +58,7 @@ class HudData {
                 }
             }
         },
-        var offset: (Int) -> Pair<Int, Item> = run {
+        val offset: (Int) -> Pair<Int, Item> = run {
             var cursor = (items.size+1)/2
             {
                 cursor = (cursor+it).coerceIn(items.indices)
