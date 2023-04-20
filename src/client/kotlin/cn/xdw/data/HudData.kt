@@ -22,11 +22,13 @@ class HudData {
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
         var count: Int = 1,
         var tag: (Int) -> String = run {
-            val tags = (item as BlockItem).registryEntry.streamTags().map { it.id.toString() }.toList()
+            val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList()
+                ?: (item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()
+                ?: listOf("Null Tags")
             var tagIndex = 0
             {when{
-                tags.size > 0 ->{
-                    tagIndex = (tagIndex + it).coerceIn(0, tags.size - 1)
+                tags.isNotEmpty() ->{
+                    tagIndex = (tagIndex + it).coerceIn(tags.indices)
                     tags[tagIndex]
                 }
                 else->"Null Tag"
@@ -61,7 +63,7 @@ class HudData {
         var offset: (Int) -> Pair<Int, Item> = run {
             var cursor = (items.size+1)/2
             {
-                cursor = (cursor+it).coerceIn(0 until items.size)
+                cursor = (cursor+it).coerceIn(items.indices)
                 val rt = cursor to items[cursor]
                 if(it!=0) switchItem(rt.second.item)
                 rt

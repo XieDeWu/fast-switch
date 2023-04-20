@@ -57,6 +57,10 @@ class Perlin1DTest{
         val noises = noiseSampler(1000)
         val weights = listOf(2,2,4,8,8,16)
         val lines = getLines(noises,weights)
+        val groupBy = noiseToWeight(noises, weights)
+            .groupBy { it.second }
+            .toSortedMap()
+            .mapValues { it.value.count() }
 
         val data = mapOf (
             "x" to (1 .. noises.size).map { it },

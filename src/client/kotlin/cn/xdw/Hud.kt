@@ -1,12 +1,10 @@
 package cn.xdw
 
 import cn.xdw.data.HudData
-import cn.xdw.data.KeyData
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.item.ItemStack
-import org.lwjgl.glfw.GLFW
 
 
 class Hud:HudRenderCallback {
@@ -41,7 +39,6 @@ class Hud:HudRenderCallback {
             drawIterator(3).let {
                 it("^",0xFFFF00)
                 it(cursor.second.tag(0),0xFFFF00)
-//                it(KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.let { it.pressHandle(null) }.toString(),0xFFFF00)
             }
             matrixStack?.pop()
         }
