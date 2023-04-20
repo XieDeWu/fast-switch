@@ -6,7 +6,10 @@ import net.minecraft.item.ItemStack
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.item.Item as MItem
 import net.minecraft.util.Identifier
+import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
+import net.minecraft.util.math.random.LocalRandom
 import net.minecraft.util.registry.Registry
+import kotlin.math.E
 import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
@@ -19,7 +22,7 @@ class HudData {
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
         var count: Int = 1,
         var tag: (Int) -> String = run {
-            val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList()
+            val tags = (item as BlockItem).registryEntry.streamTags().map { it.id.toString() }.toList()
             var tagIndex = 0
             {when{
                 tags.size > 0 ->{
@@ -58,73 +61,46 @@ class HudData {
         var offset: (Int) -> Pair<Int, Item> = run {
             var cursor = (items.size+1)/2
             {
-                cursor = (cursor+it).coerceIn(0, items.size-1)
+                cursor = (cursor+it).coerceIn(0 until items.size)
                 val rt = cursor to items[cursor]
                 if(it!=0) switchItem(rt.second.item)
                 rt
             }
         },
         val perlinNextItem:()->Unit = run {
-            val generate1DNoise: (Int, Double, Double, Double, Int) -> (Double) -> Double = { seed, frequency, lacunarity, persistence, octaves -> run {
-                val rng = Random(seed)
-                val randInt = { rng.nextInt() }
-                val scale = 1 / (2.0 - 1.0 / lacunarity)
-                val octavesPow = (0 until octaves).map { lacunarity.pow(it) }
-                val totalWeight = octavesPow.sum();
-                { x: Double ->
-                    var noise = 0.0
-                    var amplitude = 1.0
-
-                    for (i in 0 until octaves) {
-                        val sampleX = x * frequency * octavesPow[i]
-                        val n = (randInt() xor sampleX.toInt())
-                        noise += n * amplitude
-                        amplitude *= persistence
-                    }
-                    noise * scale / totalWeight
-                }
+            val noiseSampler by lazy{ { seed:Long,hz:Int->
+                val noiseSampler = OctavePerlinNoiseSampler.create(LocalRandom(seed), 6, 32.0, 26.0, 20.0, 14.0)
+                (1 .. hz).map { noiseSampler.sample(it.toDouble() * ln(E + hz) / 100, .0, .0) }
             } }
-            val perlin1D = generate1DNoise(233,0.02,3.0,0.6,6)
-            var x = .0
+            val noiseToWeight by lazy{ { noiseList: List<Double>, weights: List<Int> ->
+                val noiseVK = noiseList.mapIndexed { index, d -> d to index }.sortedBy { it.first }
+                fun spl(noiseVK: List<Pair<Double, Int>>, weights: List<Int>, index: Int): List<Pair<Int, Int>> {
+                    if (weights.isEmpty()) return listOf()
+                    val totalWeight = weights.sum()
+                    val headWeight = weights.first()
+                    val tailWeights = weights.drop(1)
+                    val headNumSize = (1.0 * headWeight / totalWeight * noiseVK.size).toInt()
+                    val noiseToWeightByIndex = noiseVK.slice(0 until headNumSize).map { it.second to index }
+                    val tailNoiseVK = noiseVK.drop(headNumSize)
+                    return noiseToWeightByIndex.plus(spl(tailNoiseVK, tailWeights, index + 1))
+                }
+                spl(noiseVK,weights,0).sortedBy { it.first }
+            } }
+            var callNum = 0
             {
-                x += 1
-
+                ++callNum
+                if(items.size > 0){
+                    val seed = items.fold(233){old,new->old xor new.count}
+                    val sum = items.sumOf { it.count }
+                    val noises = noiseSampler(seed.toLong(),sum)
+                    val weights = items.map { it.count }
+                    val placeList = noiseToWeight(noises, weights).map { it.second }
+                    val currentCursor = offset(0).first
+                    val targetCursor = placeList[callNum % placeList.size]
+                    offset(targetCursor-currentCursor)
+                }
             }
         },
-
-//        val perlinNextItem:()->Unit = run {
-//            val perlin1d: (Int)->(Double)->Double = { seed->run {
-//                val ease = { y0: Double, y1: Double, t: Double ->
-//                    val t3 = t.pow(3)
-//                    val t4 = t3 * t
-//                    val t5 = t4 * t
-//                    ((6 * t5 - 15 * t4 + 10 * t3) * y1 + (-6 * t5 + 15 * t4 - 10 * t3 + 1) * y0)
-//                }
-//                { x: Double ->
-//                    val x0 = floor(x).toInt()
-//                    val x1 = x0 + 1
-//                    val f0 = Random(seed+x0).nextDouble()
-//                    val f1 = Random(seed+x1).nextDouble()
-//                    val t = x - x0
-//                    ease(f0, f1, t)
-//                }
-//            } }
-//            var x = .0
-//            {
-//                val curIndex = offset(0).first
-//                when{
-//                    items.size > 0 ->{
-//                        val weightSum = items.fold(0){acc,next->acc+next.count }
-//                        val hz = (1+0.3*ln(weightSum.toDouble().coerceAtLeast(1.0)) )
-//                        x += 1/hz
-//                        val targetIndex = items
-//                            .mapIndexed{index,t-> index to (ln(t.count.toDouble().coerceAtLeast(1.0)) * perlin1d(weightSum + index)(x)) }
-//                            .sortedByDescending { it.second }[0].first
-//                        offset(targetIndex-curIndex)
-//                    }
-//                }
-//            }
-//        },
         val randomNextItem:()->Item = {when{items.size>0->items[Random.nextInt(items.size-1)] else->Item()}},
     )
     companion object{
