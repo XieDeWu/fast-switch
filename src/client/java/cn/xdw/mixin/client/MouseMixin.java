@@ -1,12 +1,11 @@
 package cn.xdw.mixin.client;
 
 import cn.xdw.handle.MouseHandle;
+import net.minecraft.client.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.Mouse;
 
 @Mixin(Mouse.class)
 public class MouseMixin {

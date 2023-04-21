@@ -3,18 +3,15 @@ package cn.xdw.data
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
-import net.minecraft.item.Items
 import net.minecraft.screen.slot.SlotActionType
-import net.minecraft.item.Item as MItem
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
 import net.minecraft.util.registry.Registry
 import kotlin.math.E
-import kotlin.math.floor
 import kotlin.math.ln
-import kotlin.math.pow
 import kotlin.random.Random
+import net.minecraft.item.Item as MItem
 
 
 class HudData {
@@ -101,7 +98,7 @@ class HudData {
                 }
             }
         },
-        val randomNextItem:()->Item = {when{items.size>0->items[Random.nextInt(items.size-1)] else->Item()}},
+        val randomNextItem:()->Item = {when{items.isNotEmpty() ->items[Random.nextInt(items.size-1)] else->Item()}},
     )
     companion object{
         var currentItemGroup: ItemGroup = ItemGroup(mutableListOf(
