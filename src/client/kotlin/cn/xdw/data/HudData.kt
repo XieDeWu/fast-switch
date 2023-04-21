@@ -101,26 +101,27 @@ class HudData {
         val randomNextItem:()->Item = {when{items.isNotEmpty() ->items[Random.nextInt(items.size-1)] else->Item()}},
     )
     companion object{
-        var currentItemGroup: ItemGroup = ItemGroup(mutableListOf(
+        var currentItemGroup: ItemGroup = ItemGroup(listOf(
             Item("minecraft:oak_log"),
             Item("minecraft:spruce_log"),
             Item("minecraft:birch_log"),
         ))
-        var itemGroupList = mutableListOf(
-            ItemGroup(mutableListOf(
+        var itemGroupList = listOf(
+            ItemGroup(listOf(
                     Item("minecraft:oak_log"),
                     Item("minecraft:spruce_log"),
                     Item("minecraft:birch_log"),
                 )),
-            ItemGroup(mutableListOf(
+            ItemGroup(listOf(
                     Item("minecraft:oak_planks"),
                     Item("minecraft:spruce_planks"),
                     Item("minecraft:birch_planks"),
                 )),
-            ItemGroup(mutableListOf(
+            ItemGroup(listOf(
                     Item("minecraft:oak_stairs"),
                     Item("minecraft:spruce_stairs"),
                     Item("minecraft:birch_stairs"),
+
                 )),
         )
         fun save(){

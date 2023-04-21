@@ -26,7 +26,6 @@ class KeyHandle {
                                 .map { inventory.getStack(it) }
                                 .filter { !it.isEmpty }
                                 .map { HudData.Item(id = it.registryEntry.key.get().value.toString(), count = it.count) }
-                                .toMutableList()
                             )
                             currentItemGroup.switchDisplay(true)
                             val a = 1
