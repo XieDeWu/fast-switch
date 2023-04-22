@@ -3,6 +3,7 @@ package cn.xdw.data
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
@@ -19,12 +20,13 @@ import net.minecraft.item.Item as MItem
 class HudData {
     data class Item(
         val id:String = "minecraft:air",
-        val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).get(),
+        val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
         val tag: (Int) -> String = run {
-            val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList().takeIf { it.isNotEmpty() }
-                ?: (item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?.takeIf { it.isNotEmpty() }
-                ?: listOf("Null Tags")
+            val tags = ((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
+                    +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
+                    ).sorted().takeIf { it.isNotEmpty() }
+                ?:listOf("Null Tags")
             var tagIndex = 0
             {
                 tagIndex = (tagIndex + it).coerceIn(tags.indices)
@@ -109,14 +111,17 @@ class HudData {
     }
     companion object{
         val tagItem = run {
-            var regs: SortedMap<String, List<String>> = sortedMapOf();
+            var tags: SortedMap<String, Set<String>> = sortedMapOf();
             { when {
-                regs.isNotEmpty() ->regs
+                tags.isNotEmpty() ->tags
                 else->{
-                    regs = Registry.ITEM.streamTagsAndEntries().toList()
-                        .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
-                        .associateBy({ it.first }, { it.second }).toSortedMap()
-                    regs
+                    tags = listOf(Registry.ITEM, Registry.BLOCK).fold(mapOf<String, List<String>>()) { old, new ->
+                            old + new.streamTagsAndEntries().toList()
+                                .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
+                        }.asSequence().groupBy({ it.key }, { it.value })
+                            .mapValues { (_, values) -> values.flatten().toSet() }
+                            .toSortedMap()
+                    tags
                 }
             } }
         }
