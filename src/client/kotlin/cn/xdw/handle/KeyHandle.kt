@@ -49,7 +49,7 @@ class KeyHandle {
                 onShortClick = {
                     val inventory = MinecraftClient.getInstance().player?.inventory
                     when{
-                        inventory!=null->{
+                        !currentItemGroup.switchDisplay(false) && inventory!=null->{
                             (0..8)
                                 .map { inventory.getStack(it) }
                                 .filter { !it.isEmpty }
@@ -60,6 +60,8 @@ class KeyHandle {
                                 }
                         }
                     }
+                    if(currentItemGroup.switchDisplay(false))
+                        currentItemGroup.modeSwitch(1)
                     Unit
                 }
             }

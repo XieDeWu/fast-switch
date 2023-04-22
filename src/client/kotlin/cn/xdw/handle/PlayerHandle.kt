@@ -26,7 +26,7 @@ class PlayerHandle {
                         val client = MinecraftClient.getInstance()
                         client.interactionManager?.let {
                             it.interactBlock(client.player, hand, oldHitResult).takeIf { it.isAccepted }?.let {
-                                HudData.currentItemGroup.perlinNextItem()
+                                HudData.currentItemGroup.nextItem()
                                 return@UseBlockCallback ActionResult.SUCCESS
                             }
                         }

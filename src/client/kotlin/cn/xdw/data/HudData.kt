@@ -5,10 +5,16 @@ import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
 import net.minecraft.screen.slot.SlotActionType
+import net.minecraft.text.MutableText
+import net.minecraft.text.SelectorTextContent
+import net.minecraft.text.Text
+import net.minecraft.text.TextContent
+import net.minecraft.text.Texts
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
 import net.minecraft.util.registry.Registry
+import org.apache.logging.log4j.message.Message
 import java.util.*
 import kotlin.math.E
 import kotlin.math.ln
@@ -38,6 +44,12 @@ class HudData {
             require(tags.isNotEmpty()){"tags is empty!"}
         }
     }
+    enum class RandomMode{
+        NULL_RANDOM,
+        PERLIN_RANDOM,
+        FULL_RANDOM,
+    }
+    @OptIn(ExperimentalStdlibApi::class)
     data class ItemGroup(
         val items: List<Item>,
         val switchDisplay: (Boolean) -> Boolean = run {
@@ -72,42 +84,69 @@ class HudData {
                 rt
             }
         },
-        val perlinNextItem:()->Unit = run {
-            val noiseSampler by lazy{ { seed:Long,hz:Int->
-                val noiseSampler = OctavePerlinNoiseSampler.create(LocalRandom(seed), 6, 32.0, 26.0, 20.0, 14.0)
-                (1 .. hz).map { noiseSampler.sample(it.toDouble() * ln(E + hz) / 100, .0, .0) }
-            } }
-            val noiseToWeight by lazy{ { noiseList: List<Double>, weights: List<Int> ->
-                val noiseVK = noiseList.mapIndexed { index, d -> d to index }.sortedBy { it.first }
-                fun spl(noiseVK: List<Pair<Double, Int>>, weights: List<Int>, index: Int): List<Pair<Int, Int>> {
-                    if (weights.isEmpty()) return listOf()
-                    val totalWeight = weights.sum()
-                    val headWeight = weights.first()
-                    val tailWeights = weights.drop(1)
-                    val headNumSize = (1.0 * headWeight / totalWeight * noiseVK.size).toInt()
-                    val noiseToWeightByIndex = noiseVK.slice(0 until headNumSize).map { it.second to index }
-                    val tailNoiseVK = noiseVK.drop(headNumSize)
-                    return noiseToWeightByIndex.plus(spl(tailNoiseVK, tailWeights, index + 1))
-                }
-                spl(noiseVK,weights,0).sortedBy { it.first }
-            } }
-            var callNum = 0
+        val modeSwitch: (Int) -> RandomMode = run {
+            var count = 0
+            val map = listOf(
+                RandomMode.NULL_RANDOM to "无随机",
+                RandomMode.PERLIN_RANDOM to "柏林随机",
+                RandomMode.FULL_RANDOM to "完全随机",
+            );
             {
-                if(items.isNotEmpty()){
-                    val seed = items.fold(233){old,new->old xor new.count}
-                    val sum = items.sumOf { it.count }
-                    val noises = noiseSampler(seed.toLong(),sum)
-                    val weights = items.map { it.count }
-                    val placeList = noiseToWeight(noises, weights).map { it.second }
-                    val currentCursor = offset(0).first
-                    val targetCursor = placeList[callNum % placeList.size]
-                    offset(targetCursor-currentCursor)
-                    ++callNum
+                count += it
+                val next = map[count % map.size]
+                MinecraftClient.getInstance().player?.sendMessage(Text.literal(next.second),true)
+                next.first
+            }
+        },
+        val nextItem: ()->Unit = run {
+            val perlinNextItem:()->Unit = run {
+                val noiseSampler by lazy{ { seed:Long,hz:Int->
+                    val noiseSampler = OctavePerlinNoiseSampler.create(LocalRandom(seed), 6, 32.0, 26.0, 20.0, 14.0)
+                    (1 .. hz).map { noiseSampler.sample(it.toDouble() * ln(E + hz) / 100, .0, .0) }
+                } }
+                val noiseToWeight by lazy{ { noiseList: List<Double>, weights: List<Int> ->
+                    val noiseVK = noiseList.mapIndexed { index, d -> d to index }.sortedBy { it.first }
+                    fun spl(noiseVK: List<Pair<Double, Int>>, weights: List<Int>, index: Int): List<Pair<Int, Int>> {
+                        if (weights.isEmpty()) return listOf()
+                        val totalWeight = weights.sum()
+                        val headWeight = weights.first()
+                        val tailWeights = weights.drop(1)
+                        val headNumSize = (1.0 * headWeight / totalWeight * noiseVK.size).toInt()
+                        val noiseToWeightByIndex = noiseVK.slice(0 until headNumSize).map { it.second to index }
+                        val tailNoiseVK = noiseVK.drop(headNumSize)
+                        return noiseToWeightByIndex.plus(spl(tailNoiseVK, tailWeights, index + 1))
+                    }
+                    spl(noiseVK,weights,0).sortedBy { it.first }
+                } }
+                var callNum = 0
+                {
+                    if(items.isNotEmpty()){
+                        val seed = items.fold(233){old,new->old xor new.count}
+                        val sum = items.sumOf { it.count }
+                        val noises = noiseSampler(seed.toLong(),sum)
+                        val weights = items.map { it.count }
+                        val placeList = noiseToWeight(noises, weights).map { it.second }
+                        val currentCursor = offset(0).first
+                        val targetCursor = placeList[callNum % placeList.size]
+                        offset(targetCursor-currentCursor)
+                        ++callNum
+                    }
+                }
+            }
+            val randomNextItem:()->Item = {
+                when {
+                    items.isNotEmpty() -> items[Random.nextInt()%items.size]
+                    else -> Item()
+                }
+            }
+            {
+                when(modeSwitch(0)){
+                    RandomMode.PERLIN_RANDOM->perlinNextItem()
+                    RandomMode.FULL_RANDOM->randomNextItem()
+                    else->Unit
                 }
             }
         },
-        val randomNextItem:()->Item = {when{items.isNotEmpty() ->items[Random.nextInt(items.size-1)] else->Item()}},
-
     ){
         init {
             require(items.isNotEmpty()){"Items is Empty!"}
