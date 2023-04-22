@@ -6,23 +6,28 @@ import cn.xdw.data.KeyData
 import net.minecraft.client.MinecraftClient
 import org.lwjgl.glfw.GLFW
 
+@Suppress("NestedLambdaShadowedImplicitParameter")
 class KeyHandle {
     companion object{
         fun registry(){
             KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.apply {
-                onShortClick = {
-                    currentItemGroup.switchDisplay(true)
-                    Unit
-                }
-                onLongPressOne = {
-                    when {
-                        currentItemGroup.switchDisplay(false)-> {
-                            HudData.tagItem[currentItemGroup.offset(0).second.tag(0)]
-                                ?.map { HudData.Item(it) }
-                                ?.let { currentItemGroup = HudData.ItemGroup(it).apply { switchDisplay(true) } }
-                        }
+                currentItemGroup.apply {
+                    onShortClick = {
+                        switchDisplay(true)
+                        Unit
                     }
-                    Unit
+                    onLongPressOne = {
+                        currentItemGroup.apply {
+                            when {
+                                switchDisplay(false) -> {
+                                    HudData.tagItem[offset(0).second.tag(0)]
+                                        ?.map { HudData.Item(it) }
+                                        ?.let { currentItemGroup = HudData.ItemGroup(it).apply { switchDisplay(true) } }
+                                }
+                            }
+                        }
+                        Unit
+                    }
                 }
             }
             KeyData.keyState[GLFW.GLFW_KEY_V]?.apply {
@@ -31,14 +36,14 @@ class KeyHandle {
                     val inventory = MinecraftClient.getInstance().player?.inventory
                     when{
                         inventory!=null->{
-                            currentItemGroup = HudData.ItemGroup(
-                                (0..8)
+                            (0..8)
                                 .map { inventory.getStack(it) }
                                 .filter { !it.isEmpty }
-                                .map { HudData.Item(id = it.registryEntry.key.get().value.toString(), count = it.count) }
-                            )
-                            currentItemGroup.switchDisplay(true)
-                            val a = 1
+                                .takeIf { it.isNotEmpty() }
+                                ?.let {
+                                    currentItemGroup = HudData.ItemGroup(it.map { HudData.Item(id = it.registryEntry.key.get().value.toString(), count = it.count) })
+                                        .apply { switchDisplay(true) }
+                                }
                         }
                     }
                     Unit

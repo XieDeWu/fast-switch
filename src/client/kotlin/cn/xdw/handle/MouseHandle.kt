@@ -11,9 +11,7 @@ class MouseHandle {
     companion object{
         @Suppress("UNUSED_PARAMETER")
         fun mouseHandle(window: Long, horizontal: Double, vertical: Double, info: CallbackInfo) {
-            val group = HudData.currentItemGroup.apply {
-                if(items.isEmpty()) return@mouseHandle
-            }
+            val group = HudData.currentItemGroup
             val client = MinecraftClient.getInstance()
             if (client.currentScreen != null) return;
             val hud = group.switchDisplay(false)

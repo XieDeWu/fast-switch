@@ -100,7 +100,12 @@ class HudData {
             }
         },
         val randomNextItem:()->Item = {when{items.isNotEmpty() ->items[Random.nextInt(items.size-1)] else->Item()}},
-    )
+
+    ){
+        init {
+            require(items.isNotEmpty()){"Items is Empty!"}
+        }
+    }
     companion object{
         val tagItem = Registry.ITEM.streamTagsAndEntries().toList().map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }.associateBy({ it.first },{ it.second }).toSortedMap()
         var currentItemGroup = tagItem["minecraft:logs"]?.let { ItemGroup(it.map { Item(it) }) }
