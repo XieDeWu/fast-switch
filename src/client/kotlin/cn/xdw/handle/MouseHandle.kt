@@ -11,14 +11,16 @@ class MouseHandle {
     companion object{
         @Suppress("UNUSED_PARAMETER")
         fun mouseHandle(window: Long, horizontal: Double, vertical: Double, info: CallbackInfo) {
+            val group = HudData.currentItemGroup.apply {
+                if(items.isEmpty()) return@mouseHandle
+            }
             val client = MinecraftClient.getInstance()
             if (client.currentScreen != null) return;
-            val hud = HudData.currentItemGroup.switchDisplay(false)
-            val alt = KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.isPress()?:false
+            val hud = group.switchDisplay(false)
             val ctrl = KeyData.keyState[GLFW.GLFW_KEY_LEFT_CONTROL]?.isPress()?:false
             when{
-                hud && ctrl ->HudData.currentItemGroup.offset(0).second.tag(vertical.toInt())
-                hud && !ctrl ->HudData.currentItemGroup.offset(vertical.toInt())
+                hud && ctrl -> group.offset(0).second.tag(vertical.toInt())
+                hud && !ctrl -> group.offset(vertical.toInt())
             }
             when{hud->info.cancel()}
 
