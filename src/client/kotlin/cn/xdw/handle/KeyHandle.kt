@@ -14,6 +14,16 @@ class KeyHandle {
                     currentItemGroup.switchDisplay(true)
                     Unit
                 }
+                onLongPressOne = {
+                    when {
+                        currentItemGroup.switchDisplay(false)-> {
+                            HudData.tagItem[currentItemGroup.offset(0).second.tag(0)]
+                                ?.map { HudData.Item(it) }
+                                ?.let { currentItemGroup = HudData.ItemGroup(it).apply { switchDisplay(true) } }
+                        }
+                    }
+                    Unit
+                }
             }
             KeyData.keyState[GLFW.GLFW_KEY_V]?.apply {
                 onShortClick = {

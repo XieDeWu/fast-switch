@@ -14,6 +14,7 @@ import kotlin.random.Random
 import net.minecraft.item.Item as MItem
 
 
+@Suppress("NestedLambdaShadowedImplicitParameter", "MemberVisibilityCanBePrivate")
 class HudData {
     data class Item(
         val id:String = "minecraft:air",
@@ -101,11 +102,13 @@ class HudData {
         val randomNextItem:()->Item = {when{items.isNotEmpty() ->items[Random.nextInt(items.size-1)] else->Item()}},
     )
     companion object{
-        var currentItemGroup: ItemGroup = ItemGroup(listOf(
-            Item("minecraft:oak_log"),
-            Item("minecraft:spruce_log"),
-            Item("minecraft:birch_log"),
-        ))
+        val tagItem = Registry.ITEM.streamTagsAndEntries().toList().map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }.associateBy({ it.first },{ it.second }).toSortedMap()
+        var currentItemGroup = tagItem["minecraft:logs"]?.let { ItemGroup(it.map { Item(it) }) }
+            ?:ItemGroup(listOf(
+                Item("minecraft:oak_log"),
+                Item("minecraft:spruce_log"),
+                Item("minecraft:birch_log"),
+            ))
         var itemGroupList = listOf(
             ItemGroup(listOf(
                     Item("minecraft:oak_log"),
