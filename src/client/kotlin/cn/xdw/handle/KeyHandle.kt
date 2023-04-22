@@ -19,11 +19,23 @@ class KeyHandle {
                     currentItemGroup = currentItemGroup.let {
                         when {
                             it.switchDisplay(false) -> {
-                                HudData.tagItem()[it.offset(0).second.tag(0)]
+                                val cursor = it.offset(0)
+                                val oldID = cursor.second.id
+                                val oldTag = cursor.second.offset(0).second
+                                HudData.tagItem()[it.offset(0).second.offset(0).second]
                                     ?.map { HudData.Item(it) }
                                     ?.let {
                                         HudData.ItemGroup(it).apply {
                                             switchDisplay(true)
+                                            items.indexOfFirst { it.id == oldID }.takeIf { it in items.indices }?.let {
+                                                val newCursor = offset(it - offset(0).first)
+                                                val curTagIndex = newCursor.second.offset(0).first
+                                                val tags = newCursor.second.tags
+                                                tags.indexOfFirst { it == oldTag }.takeIf { it in tags.indices }?.let {
+                                                    newCursor.second.offset(it - curTagIndex)
+                                                }
+                                            }
+                                            offset(0).second.offset(0)
                                         }
                                     }
                             }

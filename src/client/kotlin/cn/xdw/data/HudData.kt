@@ -22,18 +22,22 @@ class HudData {
         val id:String = "minecraft:air",
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
-        val tag: (Int) -> String = run {
-            val tags = ((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
-                    +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
-                    ).sorted().takeIf { it.isNotEmpty() }
-                ?:listOf("Null Tags")
+        var tags: List<String> = ((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
+                +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
+                ).sorted().takeIf { it.isNotEmpty() }
+            ?: listOf("Null Tags"),
+        val offset: (Int) -> Pair<Int,String> = run {
             var tagIndex = 0
             {
                 tagIndex = (tagIndex + it).coerceIn(tags.indices)
-                tags[tagIndex]
+                tagIndex to tags[tagIndex]
             }
         },
-    )
+    ){
+        init {
+            require(tags.isNotEmpty()){"tags is empty!"}
+        }
+    }
     data class ItemGroup(
         val items: List<Item>,
         val switchDisplay: (Boolean) -> Boolean = run {

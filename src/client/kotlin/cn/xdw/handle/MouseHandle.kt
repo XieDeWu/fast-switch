@@ -17,7 +17,7 @@ class MouseHandle {
             val hud = group.switchDisplay(false)
             val ctrl = KeyData.keyState[GLFW.GLFW_KEY_LEFT_CONTROL]?.isPress()?:false
             when{
-                hud && ctrl -> group.offset(0).second.tag(vertical.toInt())
+                hud && ctrl -> group.offset(0).second.offset(vertical.toInt())
                 hud && !ctrl -> group.offset(vertical.toInt())
             }
             when{hud->info.cancel()}
