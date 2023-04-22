@@ -9,11 +9,14 @@ import org.lwjgl.glfw.GLFW
 
 class KeyData{
     data class KeyPressData(
-        val click:Boolean,
-        val press:Boolean,
-        val short:Boolean,
-        val long:Boolean,
-        val pressTick:Int,
+        var prePress: Boolean = false,
+        var click: Boolean = false,
+        var press: Boolean = false,
+        var short: Boolean = false,
+        var long: Boolean = false,
+        var shortOne: Boolean = false,
+        var longOne: Boolean = false,
+        var pressTick: Int = 0,
     )
     @Suppress("unused")
     data class KeyPress(
@@ -23,37 +26,58 @@ class KeyData{
         val keyBinding: KeyBinding? = KeyBindingHelper.registerKeyBinding(KeyBinding(name,InputUtil.Type.KEYSYM,code,category)),
         var onShortClick:()->Unit? = {},
         var onLongClick:()->Unit? = {},
+        var onShortPressOne:()->Unit? = {},
         var onShortPress:()->Unit? = {},
+        var onLongPressOne:()->Unit? = {},
         var onLongPress:()->Unit? = {},
     ){
         var pressHandle:(Boolean?)->KeyPressData= run {
-            var prePress = false
-            var click = false
-            var press = false
-            var short = false
-            var long = false
-            var pressTick = 0
-            {
-                it?.let{
-                    pressTick += when{it->1 else->0}
-                    click = prePress && !it
-                    press = prePress && it
-                    short = pressTick in 1..8
-                    long = pressTick > 20
-                    when{
-                        click->when{
-                            short->onShortClick()
-                            long->onLongClick()
+            val data = KeyPressData();
+            { b->
+                b?.let {
+                    data.apply {
+                        pressTick += when {
+                            b -> 1
+                            else -> 0
                         }
-                        press->when{
-                            short->onShortPress()
-                            long->onLongPress()
+                        click = prePress && !b
+                        press = prePress && b
+                        short = pressTick in 1..8
+                        long = pressTick > 20
+                        when {
+                            press && short && !shortOne ->{
+                                shortOne = true
+                                onShortPressOne()
+                            }
+                            press && long && !longOne ->{
+                                longOne = true
+                                onLongPressOne()
+                            }
+                        }
+                        when {
+                            click -> when {
+                                short -> onShortClick()
+                                long -> onLongClick()
+                            }
+                            press -> when {
+                                short -> onShortPress()
+                                long -> onLongPress()
+                            }
+                        }
+                        when {
+                            click-> {
+                                shortOne = false
+                                longOne = false
+                            }
+                        }
+                        prePress = b
+                        pressTick = when {
+                            b -> pressTick
+                            else -> 0
                         }
                     }
-                    prePress = it
-                    pressTick = when{it->pressTick else->0}
                 }
-                KeyPressData(click,press,short,long,pressTick)
+                data
             }
         }
         fun isPress() = (pressHandle(null).press)
