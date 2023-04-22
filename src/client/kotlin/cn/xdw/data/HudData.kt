@@ -8,6 +8,7 @@ import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
 import net.minecraft.util.registry.Registry
+import java.util.*
 import kotlin.math.E
 import kotlin.math.ln
 import kotlin.random.Random
@@ -22,7 +23,7 @@ class HudData {
         val count: Int = 1,
         val tag: (Int) -> String = run {
             val tags = item.registryEntry.streamTags().map { it.id.toString() }.toList().takeIf { it.isNotEmpty() }
-                ?: (item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()
+                ?: (item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?.takeIf { it.isNotEmpty() }
                 ?: listOf("Null Tags")
             var tagIndex = 0
             {
@@ -107,8 +108,19 @@ class HudData {
         }
     }
     companion object{
-        val tagItem = Registry.ITEM.streamTagsAndEntries().toList().map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }.associateBy({ it.first },{ it.second }).toSortedMap()
-        var currentItemGroup = tagItem["minecraft:logs"]?.let { ItemGroup(it.map { Item(it) }) }
+        val tagItem = run {
+            var regs: SortedMap<String, List<String>> = sortedMapOf();
+            { when {
+                regs.isNotEmpty() ->regs
+                else->{
+                    regs = Registry.ITEM.streamTagsAndEntries().toList()
+                        .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
+                        .associateBy({ it.first }, { it.second }).toSortedMap()
+                    regs
+                }
+            } }
+        }
+        var currentItemGroup = tagItem()["minecraft:logs"]?.let { ItemGroup(it.map { Item(it) }) }
             ?:ItemGroup(listOf(
                 Item("minecraft:oak_log"),
                 Item("minecraft:spruce_log"),

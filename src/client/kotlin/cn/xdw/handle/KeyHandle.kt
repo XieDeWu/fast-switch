@@ -11,28 +11,30 @@ class KeyHandle {
     companion object{
         fun registry(){
             KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.apply {
-                currentItemGroup.apply {
-                    onShortClick = {
-                        switchDisplay(true)
-                        Unit
-                    }
-                    onLongPressOne = {
-                        currentItemGroup.apply {
-                            when {
-                                switchDisplay(false) -> {
-                                    HudData.tagItem[offset(0).second.tag(0)]
-                                        ?.map { HudData.Item(it) }
-                                        ?.let { currentItemGroup = HudData.ItemGroup(it).apply { switchDisplay(true) } }
-                                }
+                onShortClick = {
+                    currentItemGroup.switchDisplay(true)
+                    Unit
+                }
+                onLongPressOne = {
+                    currentItemGroup = currentItemGroup.let {
+                        when {
+                            it.switchDisplay(false) -> {
+                                HudData.tagItem()[it.offset(0).second.tag(0)]
+                                    ?.map { HudData.Item(it) }
+                                    ?.let {
+                                        HudData.ItemGroup(it).apply {
+                                            switchDisplay(true)
+                                        }
+                                    }
                             }
-                        }
-                        Unit
+                            else->null
+                        }?: currentItemGroup
                     }
+                    Unit
                 }
             }
             KeyData.keyState[GLFW.GLFW_KEY_V]?.apply {
                 onShortClick = {
-                    val display = currentItemGroup.switchDisplay(false)
                     val inventory = MinecraftClient.getInstance().player?.inventory
                     when{
                         inventory!=null->{
