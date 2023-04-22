@@ -1,15 +1,19 @@
 package cn.xdw.data
 
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.network.ClientPlayerInteractionManager
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket
+import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.text.MutableText
 import net.minecraft.text.SelectorTextContent
 import net.minecraft.text.Text
 import net.minecraft.text.TextContent
 import net.minecraft.text.Texts
+import net.minecraft.util.Hand
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
@@ -66,11 +70,18 @@ class HudData {
             val inter = client.interactionManager
             when{
                 client!=null && player!=null && inventory!=null && inter !=null ->{
-                    inter.clickSlot(player.currentScreenHandler.syncId, inventory.selectedSlot + 36, 0, SlotActionType.QUICK_MOVE, client.player)
-                    player.dropSelectedItem(true)
-                    val slot: Int = inventory.getSlotWithStack(ItemStack(it))
-                    if (slot>=0 && slot!= inventory.selectedSlot) {
-                        inter.pickFromInventory(slot)
+                    when{
+                        player.isCreative->{
+                            player.networkHandler.sendPacket(CreativeInventoryActionC2SPacket(inventory.selectedSlot + 36, ItemStack(it)))
+                        }
+                        else->{
+                            inter.clickSlot(player.currentScreenHandler.syncId, inventory.selectedSlot + 36, 0, SlotActionType.QUICK_MOVE, client.player)
+                            player.dropSelectedItem(true)
+                            val slot: Int = inventory.getSlotWithStack(ItemStack(it))
+                            if (slot>=0 && slot!= inventory.selectedSlot) {
+                                inter.pickFromInventory(slot)
+                            }
+                        }
                     }
                 }
             }
