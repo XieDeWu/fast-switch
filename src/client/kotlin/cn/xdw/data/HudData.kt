@@ -24,9 +24,10 @@ class HudData {
         val id:String = "minecraft:air",
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
-        val tags: List<String> = ((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
+        val tags: List<String> = (listOf(id)+(
+                (item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
                 +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
-                ).sorted().takeIf { it.isNotEmpty() }
+                ).sorted().distinct()).takeIf { it.isNotEmpty() }
             ?: listOf("Null Tags"),
         val offset: (Int) -> Pair<Int,String> = run {
             var tagIndex = 0
@@ -57,8 +58,8 @@ class HudData {
             }
             val splitID by lazy{ splitID@{ it: String ->
                 val regex = """([^:]+:)(.+)""".toRegex()
-                val (namespace, name) = regex.matchEntire(it)?.destructured ?: return@splitID listOf(it)
-                listOf(it) + splitAffix(name).map { "${namespace}*${it}*" }
+                val (_, name) = regex.matchEntire(it)?.destructured ?: return@splitID listOf(it)
+                listOf(it) + splitAffix(name).map { "*${it}*" }
             } }
             val tagAffixIndex = List(tags.size){ 0 }.toMutableList();
             {
