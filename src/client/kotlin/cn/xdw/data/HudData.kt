@@ -1,24 +1,16 @@
 package cn.xdw.data
 
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.network.ClientPlayerInteractionManager
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket
 import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket
 import net.minecraft.screen.slot.SlotActionType
-import net.minecraft.text.MutableText
-import net.minecraft.text.SelectorTextContent
 import net.minecraft.text.Text
-import net.minecraft.text.TextContent
-import net.minecraft.text.Texts
-import net.minecraft.util.Hand
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
 import net.minecraft.util.registry.Registry
-import org.apache.logging.log4j.message.Message
 import java.util.*
 import kotlin.math.E
 import kotlin.math.ln
@@ -32,7 +24,7 @@ class HudData {
         val id:String = "minecraft:air",
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
-        var tags: List<String> = ((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
+        val tags: List<String> = ((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
                 +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
                 ).sorted().takeIf { it.isNotEmpty() }
             ?: listOf("Null Tags"),
@@ -41,6 +33,39 @@ class HudData {
             {
                 tagIndex = (tagIndex + it).coerceIn(tags.indices)
                 tagIndex to tags[tagIndex]
+            }
+        },
+        val affixes: (Int)->String = run {
+            val splitAffix:(String)->List<String> = run {
+                val affixRegex = "(_|/|\\p{Alpha}+)".toRegex();
+                splitAffix@{
+                    val atoms = affixRegex.findAll(it).map { it.value }.toList()
+                    if(atoms.isEmpty()) return@splitAffix listOf(it)
+                    val size = atoms.size
+                    (size downTo 1).flatMap { w ->
+                        atoms.indices.map{ o ->
+                            val left = atoms.size-o-w
+                            val right = atoms.size-o-1
+                            val s = left..right
+                            when (s.first) {
+                                in atoms.indices ->s.fold("") { old, new -> old + atoms[new] }
+                                else ->""
+                            }
+                        }.filter { !(it == "" || it == "_") }
+                    }
+                }
+            }
+            val splitID by lazy{ splitID@{ it: String ->
+                val regex = """([^:]+:)(.+)""".toRegex()
+                val (namespace, name) = regex.matchEntire(it)?.destructured ?: return@splitID listOf(it)
+                listOf(it) + splitAffix(name).map { "${namespace}*${it}*" }
+            } }
+            val tagAffixIndex = List(tags.size){ 0 }.toMutableList();
+            {
+                val tagIndex = offset(0).first
+                val arr = splitID(tags[tagIndex])
+                tagAffixIndex[tagIndex] = (tagAffixIndex[tagIndex] + it).coerceIn(arr.indices)
+                arr[tagAffixIndex[tagIndex]]
             }
         },
     ){

@@ -11,7 +11,7 @@ import kotlin.math.E
 import kotlin.math.ln
 import kotlin.random.Random
 
-@Suppress("NestedLambdaShadowedImplicitParameter")
+@Suppress("NestedLambdaShadowedImplicitParameter", "RedundantSemicolon")
 class Test{
     @Suppress("NestedLambdaShadowedImplicitParameter")
     @Test
@@ -76,29 +76,34 @@ class Test{
     }
     @Test
     fun affixParse(){
-        val idSplit:(String)->List<String> = run {
-            val regex = Regex("(_|\\p{Alpha}+)");
-            strSplit@{
-                val atoms = regex.findAll(it).map { it.value }.toList()
-                if(atoms.isEmpty()) return@strSplit listOf(it)
-                val size = atoms.size
-                val width = (size downTo 1)
-                val offset = atoms.indices
-                val list = width.flatMap { w ->
-                    offset.map offset@{ o ->
-                        val left = atoms.size-o-w
-                        val right = atoms.size-o-1
-                        val s = left..right
-                        when (s.first) {
-                            in atoms.indices ->s.fold("") { old, new -> old + atoms[new] }
-                            else -> return@offset ""
-                        }
-                    }.filter { !(it == "" || it == "_") }
+        val splitNameSpace = run {
+            val splitAffix:(String)->List<String> = run {
+                val affixRegex = "(_|\\p{Alpha}+)".toRegex();
+                splitAffix@{
+                    val atoms = affixRegex.findAll(it).map { it.value }.toList()
+                    if(atoms.isEmpty()) return@splitAffix listOf(it)
+                    val size = atoms.size
+                    (size downTo 1).flatMap { w ->
+                        atoms.indices.map{ o ->
+                            val left = atoms.size-o-w
+                            val right = atoms.size-o-1
+                            val s = left..right
+                            when (s.first) {
+                                in atoms.indices ->s.fold("") { old, new -> old + atoms[new] }
+                                else ->""
+                            }
+                        }.filter { !(it == "" || it == "_") }
+                    }
                 }
-                listOf()
+            };
+            splitNameSpace@{ it: String ->
+                val regex = """([^:]+:)(.+)""".toRegex()
+                val (namespace, name) = regex.matchEntire(it)?.destructured ?: return@splitNameSpace listOf(it)
+                val affixes = listOf(it) + splitAffix(name).map { "${namespace}*${it}*" }
+                affixes
             }
         }
-        idSplit("light_gray_candle")
+        val affixes = splitNameSpace("minecraft:light_gray_candle")
         val b = 1
     }
 }

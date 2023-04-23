@@ -38,7 +38,7 @@ class Hud:HudRenderCallback {
             }
             drawIterator(3).let {
                 it("^",0xFFFF00)
-                it(cursor.second.offset(0).second,0xFFFF00)
+                it(cursor.second.affixes(0),0xFFFF00)
             }
             matrixStack?.pop()
         }

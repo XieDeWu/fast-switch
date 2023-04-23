@@ -15,10 +15,12 @@ class MouseHandle {
             val client = MinecraftClient.getInstance()
             if (client.currentScreen != null) return;
             val hud = group.switchDisplay(false)
+            val shift = KeyData.keyState[GLFW.GLFW_KEY_LEFT_SHIFT]?.isPress()?:false
             val ctrl = KeyData.keyState[GLFW.GLFW_KEY_LEFT_CONTROL]?.isPress()?:false
             when{
-                hud && ctrl -> group.offset(0).second.offset(vertical.toInt())
-                hud && !ctrl -> group.offset(vertical.toInt())
+                hud && !shift && ctrl -> group.offset(0).second.offset(vertical.toInt())
+                hud && !shift && !ctrl -> group.offset(vertical.toInt())
+                hud && shift && !ctrl -> group.offset(0).second.affixes(vertical.toInt())
             }
             when{hud->info.cancel()}
 
