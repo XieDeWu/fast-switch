@@ -93,7 +93,10 @@ class KeyHandle {
                         if(!currentItemGroup.switchDisplay(false)) sidebarToCurrentGroup()
                     }
                     run modeSwitch@{
-                        if (currentItemGroup.switchDisplay(false)) currentItemGroup.modeSwitch(1)
+                        if (currentItemGroup.switchDisplay(false)) {
+                            currentItemGroup.modeSwitch(1)
+                            currentItemGroup.recomputeOrderNext(true)
+                        }
                     }
                 }
                 onLongPressOne = {

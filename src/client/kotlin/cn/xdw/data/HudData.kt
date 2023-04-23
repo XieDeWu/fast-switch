@@ -139,15 +139,22 @@ class HudData {
                 next.first
             }
         },
+        val recomputeOrderNext:(Boolean?)->Boolean = run {
+            var recompute = false
+            {
+                it?.let { recompute = it }
+                recompute
+            }
+        },
         val nextItem: ()->Unit = run {
-            val orderNext: ()->Unit by lazy { run {
+            val orderNext: ()->()->Unit by lazy{ { run {
                 val placeList = items.foldIndexed(listOf<Int>()) { index, acc, i -> acc + List(i.count) { index } }
                 var count = offset(0).first
                 {
                     count += 1
                     offset(placeList[count % placeList.size] - offset(0).first)
                 }
-            } }
+            } } }
             val perlinNext:()->Unit = run {
                 val noiseSampler by lazy{ { seed:Long,hz:Int->
                     val noiseSampler = OctavePerlinNoiseSampler.create(LocalRandom(seed), 6, 32.0, 26.0, 20.0, 14.0)
@@ -185,10 +192,16 @@ class HudData {
             val fullNext:()->Unit = {
                 offset(Random.nextInt(items.indices)-offset(0).first)
             }
+            var curOrderNext = orderNext();
             {
-                when(modeSwitch(0)){
+                when(modeSwitch(0).also {
+                    if(recomputeOrderNext(null)){
+                        curOrderNext = orderNext()
+                        recomputeOrderNext(false)
+                    }
+                }){
                     NULL_RANDOM -> Unit
-                    ORDER_CHOOSE -> orderNext()
+                    ORDER_CHOOSE -> curOrderNext()
                     PERLIN_RANDOM ->perlinNext()
                     FULL_RANDOM ->fullNext()
                 }
