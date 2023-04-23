@@ -25,10 +25,22 @@ class KeyHandle {
                                 val oldTag = cursor.second.offset(0).second
                                 val regex = Regex("^\\*|\\*\$")
                                 val affix = cursor.second.affixes(0).replace(regex,"")
-                                HudData.tagItem().values.flatten().toSortedSet()
-                                    .filter { it.contains(affix) }
-                                    .map { HudData.Item(it) }
-                                    .takeIf { it.isNotEmpty() }
+                                when {
+                                    cursor.second.offset(0).first == 0->{
+                                        HudData.tagItem().values.flatten().toSortedSet()
+                                            .filter { it.contains(affix) }
+                                    }
+                                    cursor.second.offset(0).first != 0->{
+                                        HudData.tagItem().filter { it.key.contains(affix) }
+                                            .values.flatten().toSortedSet()
+                                            .also {
+                                                it.addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(affix) } )
+                                            }
+                                    }
+                                    else->null
+                                }
+                                    ?.map { HudData.Item(it) }
+                                    ?.takeIf { it.isNotEmpty() }
                                     ?.let {
                                         HudData.ItemGroup(it).apply {
                                             switchDisplay(true)

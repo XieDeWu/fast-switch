@@ -1,5 +1,6 @@
 package cn.xdw.data
 
+import cn.xdw.data.HudData.RandomMode.*
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
@@ -77,10 +78,10 @@ class HudData {
     }
     enum class RandomMode{
         NULL_RANDOM,
+        ORDER_CHOOSE,
         PERLIN_RANDOM,
         FULL_RANDOM,
     }
-    @OptIn(ExperimentalStdlibApi::class)
     data class ItemGroup(
         val items: List<Item>,
         val displayWidth:Int = 6+ln(items.size.toDouble()+1).toInt(),
@@ -126,9 +127,10 @@ class HudData {
         val modeSwitch: (Int) -> RandomMode = run {
             var count = 0
             val map = listOf(
-                RandomMode.NULL_RANDOM to "无随机",
-                RandomMode.PERLIN_RANDOM to "柏林随机",
-                RandomMode.FULL_RANDOM to "完全随机",
+                NULL_RANDOM to "无随机",
+                ORDER_CHOOSE to "顺序选取",
+                PERLIN_RANDOM to "柏林随机",
+                FULL_RANDOM to "完全随机",
             );
             {
                 count += it
@@ -138,7 +140,15 @@ class HudData {
             }
         },
         val nextItem: ()->Unit = run {
-            val perlinNextItem:()->Unit = run {
+            val orderNext: ()->Unit = run {
+                val placeList = items.foldIndexed(listOf<Int>()) { index, acc, i -> acc + List(i.count) { index } }
+                var count = 0
+                {
+                    offset(placeList[count % placeList.size] - offset(0).first)
+                    count += 1
+                }
+            }
+            val perlinNext:()->Unit = run {
                 val noiseSampler by lazy{ { seed:Long,hz:Int->
                     val noiseSampler = OctavePerlinNoiseSampler.create(LocalRandom(seed), 6, 32.0, 26.0, 20.0, 14.0)
                     (1 .. hz).map { noiseSampler.sample(it.toDouble() * ln(E + hz) / 100, .0, .0) }
@@ -172,17 +182,15 @@ class HudData {
                     }
                 }
             }
-            val randomNextItem:()->Item = {
-                when {
-                    items.isNotEmpty() -> items[Random.nextInt(items.indices)]
-                    else -> Item()
-                }
+            val fullNext:()->Unit = {
+                offset(Random.nextInt(items.indices)-offset(0).first)
             }
             {
                 when(modeSwitch(0)){
-                    RandomMode.PERLIN_RANDOM->perlinNextItem()
-                    RandomMode.FULL_RANDOM->randomNextItem()
-                    else->Unit
+                    NULL_RANDOM -> Unit
+                    ORDER_CHOOSE -> orderNext()
+                    PERLIN_RANDOM ->perlinNext()
+                    FULL_RANDOM ->fullNext()
                 }
             }
         },

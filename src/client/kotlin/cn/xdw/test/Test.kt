@@ -106,4 +106,12 @@ class Test{
         val affixes = splitNameSpace("minecraft:light_gray_candle")
         val b = 1
     }
+    @Test
+    fun countToIndex(){
+        val items = listOf(64,8,32)
+        val input = 103
+        val placeList = items.foldIndexed(listOf<Int>()) { index, acc, i -> acc + List(i) { index } }
+        val i = placeList[input % placeList.size]
+        val a = 0
+    }
 }
