@@ -140,14 +140,14 @@ class HudData {
             }
         },
         val nextItem: ()->Unit = run {
-            val orderNext: ()->Unit = run {
+            val orderNext: ()->Unit by lazy { run {
                 val placeList = items.foldIndexed(listOf<Int>()) { index, acc, i -> acc + List(i.count) { index } }
-                var count = 0
+                var count = offset(0).first
                 {
-                    offset(placeList[count % placeList.size] - offset(0).first)
                     count += 1
+                    offset(placeList[count % placeList.size] - offset(0).first)
                 }
-            }
+            } }
             val perlinNext:()->Unit = run {
                 val noiseSampler by lazy{ { seed:Long,hz:Int->
                     val noiseSampler = OctavePerlinNoiseSampler.create(LocalRandom(seed), 6, 32.0, 26.0, 20.0, 14.0)

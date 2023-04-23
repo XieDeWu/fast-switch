@@ -75,7 +75,17 @@ class KeyHandle {
                                     id = it.registryEntry.key.get().value.toString(),
                                     count = it.count
                                 )
-                            }).apply { switchDisplay(true) }
+                            }).apply {
+                                switchDisplay(true)
+                                val relIndex = (0..8).fold(-1){acc, i ->
+                                    when {
+                                        i>inventory.selectedSlot->acc
+                                        !inventory.getStack(i).isEmpty->acc+1
+                                        else->acc
+                                    }
+                                }
+                                offset(relIndex-offset(0).first)
+                            }
                         }
                 }
                 onShortClick = {
