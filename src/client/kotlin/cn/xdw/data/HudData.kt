@@ -15,6 +15,7 @@ import java.util.*
 import kotlin.math.E
 import kotlin.math.ln
 import kotlin.random.Random
+import kotlin.random.nextInt
 import net.minecraft.item.Item as MItem
 
 
@@ -173,7 +174,7 @@ class HudData {
             }
             val randomNextItem:()->Item = {
                 when {
-                    items.isNotEmpty() -> items[Random.nextInt()%items.size]
+                    items.isNotEmpty() -> items[Random.nextInt(items.indices)]
                     else -> Item()
                 }
             }
