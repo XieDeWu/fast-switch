@@ -149,7 +149,7 @@ class HudData {
         val nextItem: ()->Unit = run {
             val orderNext: ()->()->Unit by lazy{ { run {
                 val placeList = items.foldIndexed(listOf<Int>()) { index, acc, i -> acc + List(i.count) { index } }
-                var count = offset(0).first
+                var count = items.filterIndexed{ index, _ -> index in 0 until offset(0).first }.sumOf { it.count };
                 {
                     count += 1
                     offset(placeList[count % placeList.size] - offset(0).first)
