@@ -11,7 +11,8 @@ import kotlin.math.E
 import kotlin.math.ln
 import kotlin.random.Random
 
-class Perlin1DTest{
+@Suppress("NestedLambdaShadowedImplicitParameter")
+class Test{
     @Suppress("NestedLambdaShadowedImplicitParameter")
     @Test
     fun perlin1DTest() {
@@ -72,5 +73,32 @@ class Perlin1DTest{
         lines.map{ p += geomHLine(data, yintercept = it, linetype = "dashed", size = 1.0, color = "blue") }
         p.show()
         Thread.sleep(99999)
+    }
+    @Test
+    fun affixParse(){
+        val idSplit:(String)->List<String> = run {
+            val regex = Regex("(_|\\p{Alpha}+)");
+            strSplit@{
+                val atoms = regex.findAll(it).map { it.value }.toList()
+                if(atoms.isEmpty()) return@strSplit listOf(it)
+                val size = atoms.size
+                val width = (size downTo 1)
+                val offset = atoms.indices
+                val list = width.flatMap { w ->
+                    offset.map offset@{ o ->
+                        val left = atoms.size-o-w
+                        val right = atoms.size-o-1
+                        val s = left..right
+                        when (s.first) {
+                            in atoms.indices ->s.fold("") { old, new -> old + atoms[new] }
+                            else -> return@offset ""
+                        }
+                    }.filter { !(it == "" || it == "_") }
+                }
+                listOf()
+            }
+        }
+        idSplit("light_gray_candle")
+        val b = 1
     }
 }
