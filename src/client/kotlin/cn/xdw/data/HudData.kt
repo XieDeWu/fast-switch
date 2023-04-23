@@ -81,6 +81,7 @@ class HudData {
     @OptIn(ExperimentalStdlibApi::class)
     data class ItemGroup(
         val items: List<Item>,
+        val displayWidth:Int = 6+ln(items.size.toDouble()+1).toInt(),
         val switchDisplay: (Boolean) -> Boolean = run {
             var display = false
             {

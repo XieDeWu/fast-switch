@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.item.ItemStack
+import kotlin.math.abs
+import kotlin.math.absoluteValue
 
 
 class Hud:HudRenderCallback {
@@ -19,8 +21,10 @@ class Hud:HudRenderCallback {
             val cursor = it.offset(0)
             it.items
                 .map { ItemStack(it.item,it.count) }
-                .forEachIndexed { index, item ->
-                    val i = 16 * (index - cursor.first) + x / 2 - 8
+                .forEachIndexed each@{ index, item ->
+                    val rel = index - cursor.first
+                    if(rel.absoluteValue > it.displayWidth) return@each
+                    val i = 16 * rel + x / 2 - 8
                     val j = 16*2+y/2-8
                     val itemRenderer = client.itemRenderer
                     itemRenderer.renderInGuiWithOverrides(item, i, j)
