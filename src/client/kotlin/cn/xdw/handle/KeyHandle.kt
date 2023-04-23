@@ -23,8 +23,12 @@ class KeyHandle {
                                 val cursor = it.offset(0)
                                 val oldID = cursor.second.id
                                 val oldTag = cursor.second.offset(0).second
-                                HudData.tagItem()[it.offset(0).second.offset(0).second]
-                                    ?.map { HudData.Item(it) }
+                                val regex = Regex("^\\*|\\*\$")
+                                val affix = cursor.second.affixes(0).replace(regex,"")
+                                HudData.tagItem().values.flatten().toSortedSet()
+                                    .filter { it.contains(affix) }
+                                    .map { HudData.Item(it) }
+                                    .takeIf { it.isNotEmpty() }
                                     ?.let {
                                         HudData.ItemGroup(it).apply {
                                             switchDisplay(true)
@@ -76,6 +80,10 @@ class KeyHandle {
                     }
                 }
             }
+            // TODO: 长按Alt添加主手物品或所看方块到Hud
+            // TODO: 改V短按为长按触发 添加快捷栏物品到Hud
+            // TODO: 切换物品组，保留,物品,Tag，词缀 (暂无实现）
+            // TODO: 拆分物品搜索，组搜索，添加组词缀搜索支持
         }
     }
 }
