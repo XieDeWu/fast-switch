@@ -92,7 +92,7 @@ class HudData {
                 display
             }
         },
-        val switchItem: (MItem)->Unit = {
+        val switchItem: (MItem,Int)->Unit = { it,count->
             val client = MinecraftClient.getInstance()
             val player = client.player
             val inventory = player?.inventory
@@ -101,7 +101,7 @@ class HudData {
                 client!=null && player!=null && inventory!=null && inter !=null ->{
                     when{
                         player.isCreative->{
-                            player.networkHandler.sendPacket(CreativeInventoryActionC2SPacket(inventory.selectedSlot + 36, ItemStack(it)))
+                            player.networkHandler.sendPacket(CreativeInventoryActionC2SPacket(inventory.selectedSlot + 36, ItemStack(it,count)))
                         }
                         else->{
                             inter.clickSlot(player.currentScreenHandler.syncId, inventory.selectedSlot + 36, 0, SlotActionType.QUICK_MOVE, client.player)
@@ -120,7 +120,7 @@ class HudData {
             {
                 cursor = (cursor+it).coerceIn(items.indices)
                 val rt = cursor to items[cursor]
-                if(it!=0) switchItem(rt.second.item)
+                if(it!=0) switchItem(rt.second.item,rt.second.count)
                 rt
             }
         },
