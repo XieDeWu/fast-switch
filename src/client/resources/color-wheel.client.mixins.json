@@ -3,7 +3,8 @@
 	"package": "cn.xdw.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"MouseMixin"
+		"MouseMixin",
+		"InteractionMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
