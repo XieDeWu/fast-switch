@@ -83,21 +83,15 @@ class KeyHandle {
                             it.switchDisplay(false) -> {
                                 val regex = Regex("^\\*|\\*\$")
                                 val originAffix = oldAffix.replace(regex,"")
-                                when{
-                                    oldItem.tagOffset(0).first == 0->{
-                                        HudData.tagItem().values.flatten().toSortedSet()
-                                            .filter { it.contains(originAffix) }
+                                sortedSetOf<String>()
+                                    .apply groupItems@{
+                                        if (oldItem.affixOffset(0).first != 0) return@groupItems
+                                        addAll(HudData.tagItem().filter { it.key.contains(originAffix) }.values.flatten())
                                     }
-                                    oldItem.tagOffset(0).first != 0->{
-                                        HudData.tagItem().filter { it.key.contains(originAffix) }
-                                            .values.flatten().toSortedSet()
-                                            .apply {
-                                                addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(originAffix) } )
-                                            }
-                                            .toSortedSet()
-                                    }
-                                    else->null
-                                }
+                                    .apply {
+                                        addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(originAffix) } )
+                                    }.toSortedSet()
+                                    .takeIf { it.isNotEmpty() }
                                     ?.map { HudData.Item(it) }
                                     ?.takeIf { it.isNotEmpty() }
                                     ?.let { newGroupBuild(it) }
