@@ -19,40 +19,41 @@ class KeyHandle {
                 onLongPressOne = {
                     currentItemGroup = currentItemGroup.let {
                         when {
+                            !it.switchDisplay(false)->{
+                                currentItemGroup
+                            }
                             it.switchDisplay(false) -> {
                                 val cursor = it.offset(0)
-                                val oldID = cursor.second.id
-                                val oldTag = cursor.second.offset(0).second
                                 val regex = Regex("^\\*|\\*\$")
-                                val affix = cursor.second.affixes(0).replace(regex,"")
-                                when {
-                                    cursor.second.offset(0).first == 0->{
+                                val oldItem = cursor.second
+                                val affix = oldItem.affixOffset(0).second.replace(regex,"")
+                                when{
+                                    oldItem.tagOffset(0).first == 0->{
                                         HudData.tagItem().values.flatten().toSortedSet()
                                             .filter { it.contains(affix) }
                                     }
-                                    cursor.second.offset(0).first != 0->{
+                                    oldItem.tagOffset(0).first != 0->{
                                         HudData.tagItem().filter { it.key.contains(affix) }
                                             .values.flatten().toSortedSet()
-                                            .also {
-                                                it.addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(affix) } )
+                                            .apply {
+                                                addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(affix) } )
                                             }
+                                            .toSortedSet()
                                     }
                                     else->null
                                 }
                                     ?.map { HudData.Item(it) }
                                     ?.takeIf { it.isNotEmpty() }
                                     ?.let {
+                                        val oldID = oldItem.id
+                                        val oldTag = oldItem.tagOffset(0).second
+                                        val oldAffix = oldItem.affixOffset(0).second
                                         HudData.ItemGroup(it).apply {
                                             switchDisplay(true)
-                                            items.indexOfFirst { it.id == oldID }.takeIf { it in items.indices }?.let {
-                                                val newCursor = offset(it - offset(0).first)
-                                                val curTagIndex = newCursor.second.offset(0).first
-                                                val tags = newCursor.second.tags
-                                                tags.indexOfFirst { it == oldTag }.takeIf { it in tags.indices }?.let {
-                                                    newCursor.second.offset(it - curTagIndex)
-                                                }
-                                            }
-                                            offset(0).second.offset(0)
+                                            offsetByName(oldID)
+                                            val item = offset(0).second
+                                            item.tagByName(oldTag)
+                                            item.affixByName(oldAffix)
                                         }
                                     }
                             }

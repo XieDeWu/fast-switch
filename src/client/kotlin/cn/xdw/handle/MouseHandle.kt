@@ -18,12 +18,12 @@ class MouseHandle {
             val shift = KeyData.keyState[GLFW.GLFW_KEY_LEFT_SHIFT]?.isPress()?:false
             val ctrl = KeyData.keyState[GLFW.GLFW_KEY_LEFT_CONTROL]?.isPress()?:false
             when{
-                hud && !shift && ctrl -> group.offset(0).second.offset(vertical.toInt())
+                hud && !shift && ctrl -> group.offset(0).second.tagOffset(vertical.toInt())
                 hud && !shift && !ctrl -> {
                     group.offset(vertical.toInt())
                     group.recomputeOrderNext(true)
                 }
-                hud && shift && !ctrl -> group.offset(0).second.affixes(vertical.toInt())
+                hud && shift && !ctrl -> group.offset(0).second.affixOffset(vertical.toInt())
             }
             when{hud->info.cancel()}
 

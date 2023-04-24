@@ -31,14 +31,20 @@ class HudData {
                 +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
                 ).sorted().distinct()).takeIf { it.isNotEmpty() }
             ?: listOf("Null Tags"),
-        val offset: (Int) -> Pair<Int,String> = run {
+        val tagOffset: (Int) -> Pair<Int,String> = run {
             var tagIndex = 0
             {
                 tagIndex = (tagIndex + it).coerceIn(tags.indices)
                 tagIndex to tags[tagIndex]
             }
         },
-        val affixes: (Int)->String = run {
+        val tagByName: (String)->Boolean = { name->
+            tags.indexOfFirst { it == name }.takeIf { it in tags.indices }?.let {
+                tagOffset(it - tagOffset(0).first)
+                true
+            } == true
+        },
+        val affixes:()->List<String> = run {
             val splitAffix:(String)->List<String> = run {
                 val affixRegex = "(_|/|\\p{Alpha}+)".toRegex();
                 splitAffix@{
@@ -62,14 +68,26 @@ class HudData {
                 val regex = """([^:]+:)(.+)""".toRegex()
                 val (_, name) = regex.matchEntire(it)?.destructured ?: return@splitID listOf(it)
                 listOf(it) + splitAffix(name).map { "*${it}*" }
-            } }
+            } };
+            {
+                splitID(tags[tagOffset(0).first])
+            }
+        },
+        val affixOffset: (Int)->Pair<Int,String> = run {
             val tagAffixIndex = List(tags.size){ 0 }.toMutableList();
             {
-                val tagIndex = offset(0).first
-                val arr = splitID(tags[tagIndex])
+                val tagIndex = tagOffset(0).first
+                val arr = affixes()
                 tagAffixIndex[tagIndex] = (tagAffixIndex[tagIndex] + it).coerceIn(arr.indices)
-                arr[tagAffixIndex[tagIndex]]
+                tagAffixIndex[tagIndex] to arr[tagAffixIndex[tagIndex]]
             }
+        },
+        val affixByName: (String)->Boolean = { name->
+            val arr = affixes()
+            arr.indexOfFirst { it == name }.takeIf { it in arr.indices }?.let {
+                affixOffset(it - affixOffset(0).first)
+                true
+            } == true
         },
     ){
         init {
@@ -123,6 +141,12 @@ class HudData {
                 if(it!=0) switchItem(rt.second.item,rt.second.count)
                 rt
             }
+        },
+        val offsetByName: (String) -> Boolean = { name->
+            items.indexOfFirst { it.id == name }.takeIf { it in items.indices }?.let {
+                offset(it - offset(0).first)
+                true
+            } == true
         },
         val modeSwitch: (Int) -> RandomMode = run {
             var count = 0

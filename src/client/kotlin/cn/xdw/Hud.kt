@@ -5,7 +5,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.item.ItemStack
-import kotlin.math.abs
 import kotlin.math.absoluteValue
 
 
@@ -42,7 +41,7 @@ class Hud:HudRenderCallback {
             }
             drawIterator(3).let {
                 it("^",0xFFFF00)
-                it(cursor.second.affixes(0),0xFFFF00)
+                it(cursor.second.affixOffset(0).second,0xFFFF00)
             }
             matrixStack?.pop()
         }
