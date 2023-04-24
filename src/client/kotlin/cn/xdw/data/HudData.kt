@@ -199,18 +199,15 @@ class HudData {
                     spl(noiseVK,weights,0).sortedBy { it.first }
                 } }
                 var callNum = 0
+                var seed = Random.nextLong();
                 {
-                    if(items.isNotEmpty()){
-                        val seed = items.fold(233){old,new->old xor new.count}
-                        val sum = items.sumOf { it.count }
-                        val noises = noiseSampler(seed.toLong(),sum)
-                        val weights = items.map { it.count }
-                        val placeList = noiseToWeight(noises, weights).map { it.second }
-                        val currentCursor = offset(0).first
-                        val targetCursor = placeList[callNum % placeList.size]
-                        offset(targetCursor-currentCursor)
-                        ++callNum
-                    }
+                    val noises = noiseSampler(seed, items.sumOf { it.count })
+                    val weights = items.map { it.count }
+                    val placeList = noiseToWeight(noises, weights).map { it.second }
+                    val currentCursor = offset(0).first
+                    val targetCursor = placeList[callNum % placeList.size]
+                    offset(targetCursor - currentCursor)
+                    (++callNum).also { if(it % weights.sum() == 0) seed = Random.nextLong() }
                 }
             }
             val fullNext:()->Unit = {
