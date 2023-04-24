@@ -4,6 +4,8 @@ import cn.xdw.data.HudData
 import cn.xdw.data.HudData.Companion.currentItemGroup
 import cn.xdw.data.KeyData
 import net.minecraft.client.MinecraftClient
+import net.minecraft.item.ItemStack
+import net.minecraft.util.hit.BlockHitResult
 import org.lwjgl.glfw.GLFW
 
 @Suppress("NestedLambdaShadowedImplicitParameter")
@@ -17,26 +19,80 @@ class KeyHandle {
                     Unit
                 }
                 onLongPressOne = {
+                    val oldItem = currentItemGroup.offset(0).second
+                    val oldID = oldItem.id
+                    val oldTag = oldItem.tagOffset(0).second
+                    val oldAffix = oldItem.affixOffset(0).second
+                    val newGroupBuild = { it:List<HudData.Item>->
+                        HudData.ItemGroup(it).apply {
+                            switchDisplay(true)
+                            offsetByName(oldID)
+                            val item = offset(0).second
+                            item.tagByName(oldTag)
+                            item.affixByName(oldAffix)
+                        }
+                    }
+                    val getItemStack:(Int)->ItemStack = run@{ slot->
+                        val inventory = MinecraftClient.getInstance().player?.inventory ?: return@run ItemStack.EMPTY
+                        inventory.getStack(slot).takeIf {
+                            !(inventory.selectedSlot == slot && inventory.mainHandStack.isEmpty)
+                        } ?: run {
+                            val client = MinecraftClient.getInstance()
+                            val world = client.world
+                            val player = client.player
+                            if (client == null || world == null || player == null) return@run ItemStack.EMPTY
+                            player.raycast(20.0, 0f, false)
+                                .let { it as? BlockHitResult }
+                                ?.let { world.getBlockState(it.blockPos).block.asItem() }
+                                ?.let { ItemStack(it) }
+                                ?: ItemStack.EMPTY
+                        }
+                    }
+                    val sidebarToGroup: ()->HudData.ItemGroup? = sidebarToCurrentGroup@{
+                        val inventory = MinecraftClient.getInstance().player?.inventory ?: return@sidebarToCurrentGroup currentItemGroup
+                        (0..8)
+                            .map { getItemStack(it) }
+                            .filter { !it.isEmpty }
+                            .takeIf { it.isNotEmpty() }
+                            ?.let {
+                                HudData.ItemGroup(it.map {
+                                    HudData.Item(
+                                        id = it.registryEntry.key.get().value.toString(),
+                                        count = it.count
+                                    )
+                                }).apply {
+                                    switchDisplay(true)
+                                    val relIndex = (0..8).fold(-1) { acc, i ->
+                                        when {
+                                            i > inventory.selectedSlot -> acc
+                                            !getItemStack(i).isEmpty -> acc + 1
+                                            else -> acc
+                                        }
+                                    }
+                                    offset(relIndex - offset(0).first)
+                                }
+                            }
+                    }
                     currentItemGroup = currentItemGroup.let {
                         when {
-                            !it.switchDisplay(false)->{
-                                currentItemGroup
+                            !it.switchDisplay(false)-> sidebarToGroup()?.also { newGroup->
+                                MinecraftClient.getInstance().player?.inventory?.mainHandStack
+                                    ?.takeIf { it.isEmpty }
+                                    ?.let { newGroup.offset(0).second.let { newGroup.switchItem(it.item,it.count) } }
                             }
                             it.switchDisplay(false) -> {
-                                val cursor = it.offset(0)
                                 val regex = Regex("^\\*|\\*\$")
-                                val oldItem = cursor.second
-                                val affix = oldItem.affixOffset(0).second.replace(regex,"")
+                                val originAffix = oldAffix.replace(regex,"")
                                 when{
                                     oldItem.tagOffset(0).first == 0->{
                                         HudData.tagItem().values.flatten().toSortedSet()
-                                            .filter { it.contains(affix) }
+                                            .filter { it.contains(originAffix) }
                                     }
                                     oldItem.tagOffset(0).first != 0->{
-                                        HudData.tagItem().filter { it.key.contains(affix) }
+                                        HudData.tagItem().filter { it.key.contains(originAffix) }
                                             .values.flatten().toSortedSet()
                                             .apply {
-                                                addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(affix) } )
+                                                addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(originAffix) } )
                                             }
                                             .toSortedSet()
                                     }
@@ -44,72 +100,22 @@ class KeyHandle {
                                 }
                                     ?.map { HudData.Item(it) }
                                     ?.takeIf { it.isNotEmpty() }
-                                    ?.let {
-                                        val oldID = oldItem.id
-                                        val oldTag = oldItem.tagOffset(0).second
-                                        val oldAffix = oldItem.affixOffset(0).second
-                                        HudData.ItemGroup(it).apply {
-                                            switchDisplay(true)
-                                            offsetByName(oldID)
-                                            val item = offset(0).second
-                                            item.tagByName(oldTag)
-                                            item.affixByName(oldAffix)
-                                        }
-                                    }
+                                    ?.let { newGroupBuild(it) }
                             }
                             else->null
-                        }?: currentItemGroup
+                        } ?: currentItemGroup
                     }
                     Unit
                 }
             }
             KeyData.keyState[GLFW.GLFW_KEY_V]?.apply {
-                val sidebarToCurrentGroup = sidebarToCurrentGroup@{
-                    val inventory = MinecraftClient.getInstance().player?.inventory ?: return@sidebarToCurrentGroup
-                    (0..8)
-                        .map { inventory.getStack(it) }
-                        .filter { !it.isEmpty }
-                        .takeIf { it.isNotEmpty() }
-                        ?.let {
-                            currentItemGroup = HudData.ItemGroup(it.map {
-                                HudData.Item(
-                                    id = it.registryEntry.key.get().value.toString(),
-                                    count = it.count
-                                )
-                            }).apply {
-                                switchDisplay(true)
-                                val relIndex = (0..8).fold(-1){acc, i ->
-                                    when {
-                                        i>inventory.selectedSlot->acc
-                                        !inventory.getStack(i).isEmpty->acc+1
-                                        else->acc
-                                    }
-                                }
-                                offset(relIndex-offset(0).first)
-                            }
-                        }
-                }
                 onShortClick = {
-                    run sidebarToCurrentGroup@{
-                        if(!currentItemGroup.switchDisplay(false)) sidebarToCurrentGroup()
-                    }
-                    run modeSwitch@{
-                        if (currentItemGroup.switchDisplay(false)) {
-                            currentItemGroup.modeSwitch(1)
-                            currentItemGroup.recomputeOrderNext(true)
-                        }
-                    }
-                }
-                onLongPressOne = {
-                    run sidebarToCurrentGroup@{
-                        if(currentItemGroup.switchDisplay(false)) sidebarToCurrentGroup()
-                    }
+                    run modeSwitch@{ if (currentItemGroup.switchDisplay(false)) {
+                        currentItemGroup.modeSwitch(1)
+                        currentItemGroup.recomputeOrderNext(true)
+                    } }
                 }
             }
-            // TODO: 长按Alt添加主手物品或所看方块到Hud
-            // TODO: 改V短按为长按触发 添加快捷栏物品到Hud
-            // TODO: 切换物品组，保留,物品,Tag，词缀 (暂无实现）
-            // TODO: 拆分物品搜索，组搜索，添加组词缀搜索支持
         }
     }
 }
