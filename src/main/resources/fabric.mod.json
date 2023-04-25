@@ -15,27 +15,14 @@
 	"icon": "assets/fast-switch/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			{
-				"value": "cn.xdw.ExampleMod",
-				"adapter": "kotlin"
-			}
-		],
 		"client": [
 			{
 				"value": "cn.xdw.ExampleModClient",
 				"adapter": "kotlin"
 			}
-		],
-		"fabric-datagen": [
-			{
-				"value": "cn.xdw.ExampleModDataGenerator",
-				"adapter": "kotlin"
-			}
 		]
 	},
 	"mixins": [
-		"fast-switch.mixins.json",
 		{
 			"config": "fast-switch.client.mixins.json",
 			"environment": "client"
