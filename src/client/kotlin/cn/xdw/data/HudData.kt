@@ -26,8 +26,9 @@ class HudData {
         val id:String = "minecraft:air",
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
-        val tags: List<String> = (listOf(id)+(
-                (item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
+        val tags: List<String> = (listOf(id)
+                +HudData.customGroup.filter { it.value.any{ it.first == id } }.map { it.key }.sorted()
+                +((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
                 +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
                 ).sorted().distinct()).takeIf { it.isNotEmpty() }
             ?: listOf("Null Tags"),
@@ -234,11 +235,14 @@ class HudData {
         }
     }
     companion object{
+        var customGroup: SortedMap<String,List<Pair<String,Int>>> = sortedMapOf()
         val tagItem = run {
+            var oldCustom = customGroup
             var tags: SortedMap<String, Set<String>> = sortedMapOf();
             { when {
-                tags.isNotEmpty() ->tags
+                tags.isNotEmpty() && oldCustom === customGroup ->tags
                 else->{
+                    oldCustom = customGroup
                     tags = listOf(Registry.ITEM, Registry.BLOCK).fold(mapOf<String, List<String>>()) { old, new ->
                             old + new.streamTagsAndEntries().toList()
                                 .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
