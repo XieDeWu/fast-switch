@@ -26,9 +26,6 @@ class MouseHandle {
                 hud && shift && !ctrl -> group.offset(0).second.affixOffset(vertical.toInt())
             }
             when{hud->info.cancel()}
-
-            // TODO: 当Hud启用时，Alt(长按)+上滚轮 上个物品组
-            // TODO: 当Hud启用时，Alt(长按)+下滚轮 下个当前物品组
         }
     }
 }
