@@ -1,13 +1,14 @@
 package cn.xdw.handle
 
-import cn.xdw.data.HudData
+import cn.xdw.data.HudData.*
+import cn.xdw.data.HudData.Companion.currentItemGroup
+import cn.xdw.data.HudData.Companion.customGroup
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.text.Text
-import java.util.*
 
 
 class CommandHandle {
@@ -27,12 +28,26 @@ class CommandHandle {
                             val groupName = "custom:${name}"
                             when(opt) {
                                 add-> {
-                                    HudData.customGroup = HudData.customGroup.plus(groupName to HudData.currentItemGroup.items.map { it.id to it.count }).toSortedMap()
+                                    customGroup = customGroup.plus(groupName to currentItemGroup.items.map { it.id to it.count }).toSortedMap()
                                 }
                                 del->{
-                                    HudData.customGroup = HudData.customGroup.filter { it.key != groupName }.toSortedMap()
+                                    customGroup = customGroup.filter { it.key != groupName }.toSortedMap()
                                 }
                             }
+                            currentItemGroup = currentItemGroup.items
+                                .map { Item(id = it.id,count = it.count) }
+                                .let { ItemGroup(it) }
+                                .apply {
+                                    val oldCursorItem = currentItemGroup.offset(0).second
+                                    offsetByName(oldCursorItem.id)
+                                    offset(0).second.apply {
+                                        when(opt){
+                                            add->tagByName(groupName)
+                                            del->tagByName(oldCursorItem.tagOffset(0).second)
+                                        }
+                                    }
+                                    switchDisplay(true)
+                                }
                             pack.source.sendFeedback(Text.literal("已${when (opt) {add -> "增加";del -> "删除";else -> "" }}自定义标签组: ${groupName}"))
                             0
                         }
