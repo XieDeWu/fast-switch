@@ -253,30 +253,7 @@ class HudData {
                 }
             } }
         }
-        var currentItemGroup = tagItem()["minecraft:logs"]?.let { ItemGroup(it.map { Item(it) }) }
-            ?:ItemGroup(listOf(
-                Item("minecraft:oak_log"),
-                Item("minecraft:spruce_log"),
-                Item("minecraft:birch_log"),
-            ))
-        var itemGroupList = listOf(
-            ItemGroup(listOf(
-                    Item("minecraft:oak_log"),
-                    Item("minecraft:spruce_log"),
-                    Item("minecraft:birch_log"),
-                )),
-            ItemGroup(listOf(
-                    Item("minecraft:oak_planks"),
-                    Item("minecraft:spruce_planks"),
-                    Item("minecraft:birch_planks"),
-                )),
-            ItemGroup(listOf(
-                    Item("minecraft:oak_stairs"),
-                    Item("minecraft:spruce_stairs"),
-                    Item("minecraft:birch_stairs"),
-
-                )),
-        )
+        var currentItemGroup = ItemGroup(listOf(Item()))
         fun save(){
 
         }
