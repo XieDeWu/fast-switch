@@ -1,5 +1,6 @@
 package cn.xdw.handle
 
+import cn.xdw.data.HudData
 import cn.xdw.data.HudData.*
 import cn.xdw.data.HudData.Companion.currentItemGroup
 import cn.xdw.data.HudData.Companion.customGroup
@@ -28,7 +29,7 @@ class CommandHandle {
                             val groupName = "custom:${name}"
                             when(opt) {
                                 add-> {
-                                    customGroup = customGroup.plus(groupName to currentItemGroup.items.map { it.id to it.count }).toSortedMap()
+                                    customGroup = customGroup.plus(groupName to currentItemGroup.items.map { JsonItem(it.id,it.count) }).toSortedMap()
                                 }
                                 del->{
                                     customGroup = customGroup.filter { it.key != groupName }.toSortedMap()
@@ -48,6 +49,7 @@ class CommandHandle {
                                     }
                                     switchDisplay(true)
                                 }
+                            HudData.syncConfig("save")
                             pack.source.sendFeedback(Text.literal("已${when (opt) {add -> "增加";del -> "删除";else -> "" }}自定义标签组: ${groupName}"))
                             0
                         }

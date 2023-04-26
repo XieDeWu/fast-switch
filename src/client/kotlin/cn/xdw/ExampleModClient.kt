@@ -1,5 +1,6 @@
 package cn.xdw
 
+import cn.xdw.data.HudData
 import cn.xdw.data.KeyData
 import cn.xdw.handle.CommandHandle
 import cn.xdw.handle.KeyHandle
@@ -13,5 +14,6 @@ object ExampleModClient : ClientModInitializer {
 		KeyData.register()
 		KeyHandle.registry()
 		CommandHandle.registry()
+		HudData.registry()
 	}
 }

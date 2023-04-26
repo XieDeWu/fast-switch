@@ -1,6 +1,11 @@
 package cn.xdw.data
 
 import cn.xdw.data.HudData.RandomMode.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
@@ -12,6 +17,8 @@ import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
 import net.minecraft.util.registry.Registry
+import java.io.FileReader
+import java.io.FileWriter
 import java.util.*
 import kotlin.math.E
 import kotlin.math.ln
@@ -27,7 +34,7 @@ class HudData {
         val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
         val tags: List<String> = (listOf(id)
-                +HudData.customGroup.filter { it.value.any{ it.first == id } }.map { it.key }.sorted()
+                +HudData.customGroup.filter { it.value.any{ it.id == id } }.map { it.key }.sorted()
                 +((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
                 +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
                 ).sorted().distinct()).takeIf { it.isNotEmpty() }
@@ -234,8 +241,13 @@ class HudData {
             require(items.isNotEmpty()){"Items is Empty!"}
         }
     }
+    @Serializable
+    data class JsonItem(
+        val id: String = "minecraft:air",
+        val count: Int = 1,
+    )
     companion object{
-        var customGroup: SortedMap<String,List<Pair<String,Int>>> = sortedMapOf()
+        var customGroup: Map<String,List<JsonItem>> = sortedMapOf()
         val tagItem = run {
             var oldCustom = customGroup
             var tags: SortedMap<String, Set<String>> = sortedMapOf();
@@ -254,11 +266,25 @@ class HudData {
             } }
         }
         var currentItemGroup = ItemGroup(listOf(Item()))
-        fun save(){
-
+        val syncConfig:(String)->Unit = { opt->
+            FabricLoader.getInstance().configDir.resolve("fast-switch.json")
+                .toFile()
+                .takeIf { when(it.exists()){ true->true else->it.createNewFile()}}
+                ?.also {
+                    when(opt){
+                        "save"->FileWriter(it).apply {
+                            write(Json.encodeToString(customGroup))
+                            flush()
+                            close()
+                        }
+                        "load"->FileReader(it).apply {
+                            customGroup = Json.decodeFromString<Map<String,List<JsonItem>>>(readText()).toSortedMap()
+                        }
+                    }
+                }
         }
-        fun load(){
-
+        fun registry() {
+            syncConfig("load")
         }
     }
 }
