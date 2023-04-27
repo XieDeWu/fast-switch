@@ -250,20 +250,23 @@ class HudData {
         var customGroup: Map<String,List<JsonItem>> = sortedMapOf()
         val tagItem = run {
             var oldCustom = customGroup
-            var tags: SortedMap<String, Set<String>> = sortedMapOf();
-            { when {
-                tags.isNotEmpty() && oldCustom === customGroup ->tags
-                else->{
-                    oldCustom = customGroup
-                    tags = listOf(Registry.ITEM, Registry.BLOCK).fold(mapOf<String, List<String>>()) { old, new ->
-                            old + new.streamTagsAndEntries().toList()
-                                .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
-                        }.asSequence().groupBy({ it.key }, { it.value })
-                            .mapValues { (_, values) -> values.flatten().toSet() }
-                            .toSortedMap()
-                    tags
+            val getTags:(Int)->SortedMap<String, Set<String>> by lazy{{
+                listOf(Registry.ITEM, Registry.BLOCK).fold(mapOf<String, List<String>>()) { old, new ->
+                    old + new.streamTagsAndEntries().toList()
+                        .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
+                }.asSequence().groupBy({ it.key }, { it.value })
+                    .mapValues { (_, values) -> values.flatten().toSet() }
+                    .toSortedMap()
+            }}
+            var calcID = 0
+            {
+                calcID += when{
+                    oldCustom !== customGroup ->1.also { oldCustom = customGroup }
+                    calcID > 3 ->0
+                    else->0
                 }
-            } }
+                getTags(calcID)
+            }
         }
         var currentItemGroup = ItemGroup(listOf(Item()))
         val syncConfig:(String)->Unit = { opt->
