@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
 	"id": "fast-switch",
-	"version": "${version}",
+	"version": "1.0.0-fabric-1.19.2",
 	"name": "Fast Switch",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "长按Alt使用快捷栏物品作为当前组,鼠标滚轮切换物品,Ctrl+鼠标滚轮 切换物品组,Shift+鼠标滚轮 切换词缀,再次长按Alt搜索物品,V 调整放置模式,Alt短击开关Hud",
 	"authors": [
 		"24K_SaltedFish"
 	],
