@@ -11,12 +11,12 @@ import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
 import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket
+import net.minecraft.registry.Registries
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
-import net.minecraft.util.registry.Registry
 import java.io.FileReader
 import java.io.FileWriter
 import java.util.*
@@ -31,10 +31,10 @@ import net.minecraft.item.Item as MItem
 class HudData {
     data class Item(
         val id:String = "minecraft:air",
-        val item: MItem = Registry.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
+        val item: MItem = Registries.ITEM.getOrEmpty(Identifier.tryParse(id)).orElse(Items.AIR),
         val count: Int = 1,
         val tags: List<String> = (listOf(id)
-                +HudData.customGroup.filter { it.value.any{ it.id == id } }.map { it.key }.sorted()
+                + customGroup.filter { it.value.any{ it.id == id } }.map { it.key }.sorted()
                 +((item.registryEntry.streamTags().map { it.id.toString() }.toList()?: listOf())
                 +((item as? BlockItem)?.block?.defaultState?.registryEntry?.streamTags()?.map { it.id.toString() }?.toList()?: listOf())
                 ).sorted().distinct()).takeIf { it.isNotEmpty() }
@@ -251,7 +251,7 @@ class HudData {
         val tagItem = run {
             var oldCustom = customGroup
             val getTags:(Int)->SortedMap<String, Set<String>> by lazy{{
-                listOf(Registry.ITEM, Registry.BLOCK).fold(mapOf<String, List<String>>()) { old, new ->
+                listOf(Registries.ITEM, Registries.BLOCK).fold(mapOf<String, List<String>>()) { old, new ->
                     old + new.streamTagsAndEntries().toList()
                         .map { it.first.id.toString() to it.second.map { it.key.get().value.toString() } }
                 }.asSequence().groupBy({ it.key }, { it.value })
