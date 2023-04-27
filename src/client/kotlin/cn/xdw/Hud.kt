@@ -26,8 +26,8 @@ class Hud:HudRenderCallback {
                     val i = 16 * rel + x / 2 - 8
                     val j = 16*2+y/2-8
                     val itemRenderer = client.itemRenderer
-                    itemRenderer.renderInGuiWithOverrides(item, i, j)
-                    itemRenderer.renderGuiItemOverlay(client.textRenderer,item, i, j)
+                    itemRenderer.renderInGuiWithOverrides(matrixStack,item, i, j)
+                    itemRenderer.renderGuiItemOverlay(matrixStack,client.textRenderer,item, i, j)
             }
             val drawIterator = { initPos:Int->
                 var index = initPos
