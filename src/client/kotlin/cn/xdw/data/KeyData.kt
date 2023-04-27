@@ -42,7 +42,7 @@ class KeyData{
                         }
                         click = prePress && !b
                         press = prePress && b
-                        short = pressTick in 1..8
+                        short = pressTick in 1..12
                         long = pressTick > 20
                         when {
                             press && short && !shortOne ->{
