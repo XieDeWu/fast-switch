@@ -278,7 +278,7 @@ class HudData {
                             close()
                         }
                         "load"->FileReader(it).apply {
-                            customGroup = Json.decodeFromString<Map<String,List<JsonItem>>>(readText()).toSortedMap()
+                            customGroup = runCatching { Json.decodeFromString<Map<String,List<JsonItem>>>(readText()).toSortedMap() }.getOrDefault(customGroup)
                         }
                     }
                 }
