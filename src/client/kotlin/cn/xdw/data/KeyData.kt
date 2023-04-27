@@ -1,11 +1,10 @@
 package cn.xdw.data
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.START_CLIENT_TICK
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
-import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFW.*
 
 class KeyData{
     data class KeyPressData(
@@ -21,9 +20,6 @@ class KeyData{
     @Suppress("unused")
     data class KeyPress(
         val code: Int,
-        val name: String,
-        val category: String = "key.category.example",
-        val keyBinding: KeyBinding? = KeyBindingHelper.registerKeyBinding(KeyBinding(name,InputUtil.Type.KEYSYM,code,category)),
         var onShortClick:()->Unit? = {},
         var onLongClick:()->Unit? = {},
         var onShortPressOne:()->Unit? = {},
@@ -84,20 +80,21 @@ class KeyData{
     }
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     companion object{
-        var keyState = mutableMapOf(
-            GLFW.GLFW_KEY_LEFT_ALT.let { it to KeyPress(it,"key.example.alt") },
-            GLFW.GLFW_KEY_LEFT_SHIFT.let { it to KeyPress(it,"key.example.shift") },
-            GLFW.GLFW_KEY_LEFT_CONTROL.let { it to KeyPress(it,"key.example.ctrl") },
-            GLFW.GLFW_KEY_V.let { it to KeyPress(it,"key.example.v") },
+        val keyState = sortedMapOf(
+            GLFW_KEY_LEFT_ALT to KeyPress(GLFW_KEY_LEFT_ALT),
+            GLFW_KEY_LEFT_SHIFT to KeyPress(GLFW_KEY_LEFT_SHIFT),
+            GLFW_KEY_LEFT_CONTROL to KeyPress(GLFW_KEY_LEFT_CONTROL),
+            GLFW_KEY_V to KeyPress(GLFW_KEY_V),
         )
         fun register(){
-            val isPress = { client:MinecraftClient, code:Int->InputUtil.isKeyPressed(client.window.handle,code)}
-            ClientTickEvents.START_CLIENT_TICK.register{ keyState.forEach { (_, state) ->
-                state.pressHandle(isPress(it,state.code))
-            } }
-            ClientTickEvents.END_CLIENT_TICK.register{ keyState.forEach { (_, state) ->
-                state.pressHandle(isPress(it,state.code))
-            } }
+            val isPress = run {
+                val client = MinecraftClient.getInstance();
+                { code: Int -> InputUtil.isKeyPressed(client.window.handle, code) }
+            };
+            { keyState.forEach { (_,key)->key.pressHandle(isPress(key.code)) } }.let {
+                START_CLIENT_TICK.register { it() }
+                END_CLIENT_TICK.register { it() }
+            }
         }
     }
 }
