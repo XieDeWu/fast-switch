@@ -5,6 +5,7 @@ import cn.xdw.data.HudData.Companion.currentItemGroup
 import cn.xdw.data.KeyData
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
 import net.minecraft.util.hit.BlockHitResult
 import org.lwjgl.glfw.GLFW
 
@@ -93,6 +94,7 @@ class KeyHandle {
                                     }.toSortedSet()
                                     .takeIf { it.isNotEmpty() }
                                     ?.map { HudData.Item(it) }
+                                    ?.filter { it.item != Items.AIR }
                                     ?.takeIf { it.isNotEmpty() }
                                     ?.let { newGroupBuild(it) }
                             }
