@@ -74,8 +74,8 @@ class HudData {
             }
             val splitID by lazy{ splitID@{ it: String ->
                 val regex = """([^:]+:)(.+)""".toRegex()
-                val (_, name) = regex.matchEntire(it)?.destructured ?: return@splitID listOf(it)
-                listOf(it) + splitAffix(name).map { "*${it}*" }
+                val (namespace, name) = regex.matchEntire(it)?.destructured ?: return@splitID listOf(it)
+                listOf(it) + splitAffix(name).map { "*${it}*" } + listOf("${namespace}*")
             } };
             {
                 splitID(tags[tagOffset(0).first])
