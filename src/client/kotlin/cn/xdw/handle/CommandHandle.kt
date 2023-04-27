@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.text.Text
 
 
+@Suppress("NestedLambdaShadowedImplicitParameter")
 class CommandHandle {
     companion object{
         fun registry() {
@@ -19,7 +20,7 @@ class CommandHandle {
                 getActiveDispatcher()?.register(run {
                     val add = "add"
                     val del = "del"
-                    val handle: (String) -> (CommandContext<FabricClientCommandSource>) -> Int = { opt ->
+                    val updHandle: (String) -> (CommandContext<FabricClientCommandSource>) -> Int = { opt ->
                         code@{ pack ->
                             val name = pack.nodes.last().range.get(pack.input)
                                 .takeIf { "^[a-z0-9_]*$".toRegex().matches(it) } ?: run {
@@ -54,9 +55,18 @@ class CommandHandle {
                             0
                         }
                     }
-                    listOf(add,del).fold(literal("fast-switch")){acc, s ->
-                        acc.then(literal(s).then(argument("customGroupName", StringArgumentType.greedyString()).executes(handle(s))))
+                    val selHandle: (CommandContext<FabricClientCommandSource>) -> Int = {
+                        it.source.sendFeedback(Text.literal(customGroup
+                            .map { it.key to it.value.size }
+                            .sortedBy { it.first }
+                            .fold(""){ acc, pair -> "${acc}${when(acc.isNotEmpty()){true->"\n" else->""}}${pair}"
+                        }))
+                        0
                     }
+                    listOf(add,del).fold(literal("fast-switch")){acc, s ->
+                        acc.then(literal(s).then(argument("customGroupName", StringArgumentType.greedyString()).executes(updHandle(s))))
+                    }
+                        .apply { then(literal("list").executes(selHandle)) }
                 })
             }
         }
