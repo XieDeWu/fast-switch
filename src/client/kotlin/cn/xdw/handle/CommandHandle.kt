@@ -20,9 +20,11 @@ class CommandHandle {
                 getActiveDispatcher()?.register(run {
                     val add = "add"
                     val del = "del"
+                    val list = "list"
+                    val getInput: (CommandContext<FabricClientCommandSource>)->String = { it.nodes.last().range.get(it.input) }
                     val updHandle: (String) -> (CommandContext<FabricClientCommandSource>) -> Int = { opt ->
                         code@{ pack ->
-                            val name = pack.nodes.last().range.get(pack.input)
+                            val name = getInput(pack)
                                 .takeIf { "^[a-z0-9_]*$".toRegex().matches(it) } ?: run {
                                 pack.source.sendFeedback(Text.literal("自定义标签组名应仅包含数字,小写字母,下划线!"))
                                 return@code -1
@@ -63,10 +65,36 @@ class CommandHandle {
                         }))
                         0
                     }
-                    listOf(add,del).fold(literal("fast-switch")){acc, s ->
-                        acc.then(literal(s).then(argument("customGroupName", StringArgumentType.greedyString()).executes(updHandle(s))))
+                    val resetGroup: (CommandContext<FabricClientCommandSource>) -> Int = { pack->
+                        customGroup.entries
+                            .find { it.key == getInput(pack) }
+                            ?.takeIf { it.value.isNotEmpty() }
+                            ?.let { currentItemGroup = ItemGroup(it.value.map { Item(id = it.id,count = it.count) }).apply { switchDisplay(true) } }
+                        0
                     }
-                        .apply { then(literal("list").executes(selHandle)) }
+                    val commonRegistry = {
+                        listOf(add, del).fold(literal("fast-switch")) { acc, s ->
+                            acc.then(literal(s)
+                                .then(argument("customGroupName", StringArgumentType.greedyString())
+                                    .suggests { _, builder ->
+                                        customGroup.keys.forEach { builder.suggest(it) }.let { builder.buildFuture() }
+                                    }
+                                    .executes(updHandle(s))
+                                )
+                            )
+                        }.apply {
+                            then(literal("list")
+                                .executes(selHandle)
+                                .then(argument("customGroupName", StringArgumentType.greedyString())
+                                    .suggests { _, builder ->
+                                        customGroup.keys.forEach { builder.suggest(it) }.let { builder.buildFuture() }
+                                    }
+                                    .executes(resetGroup)
+                                )
+                            )
+                        }
+                    }
+                    commonRegistry()
                 })
             }
         }
