@@ -66,30 +66,33 @@ class CommandHandle {
                         0
                     }
                     val resetGroup: (CommandContext<FabricClientCommandSource>) -> Int = { pack->
+                        val input = getInput(pack)
                         customGroup.entries
-                            .find { it.key == getInput(pack) }
+                            .find { it.key == input }
                             ?.takeIf { it.value.isNotEmpty() }
-                            ?.let { currentItemGroup = ItemGroup(it.value.map { Item(id = it.id,count = it.count) }).apply { switchDisplay(true) } }
+                            ?.also { currentItemGroup = ItemGroup(it.value.map { Item(id = it.id,count = it.count) }).apply {
+                                switchDisplay(true)
+                            } }
+                            .also {
+                                pack.source.sendFeedback(Text.literal(when(it) {
+                                    null -> "标签组未找到! $input"
+                                    else -> "标签组已设置! $input"
+                                }))
+                            }
                         0
                     }
                     val commonRegistry = {
-                        listOf(add, del).fold(literal("fast-switch")) { acc, s ->
-                            acc.then(literal(s)
-                                .then(argument("customGroupName", StringArgumentType.greedyString())
+                        listOf(
+                            add to updHandle,
+                            del to updHandle,
+                            list to selHandle,
+                        ).fold(literal("fast-switch")) { acc, s ->
+                            acc.then(
+                                literal(s.first).then(argument("customGroupName", StringArgumentType.greedyString())
                                     .suggests { _, builder ->
                                         customGroup.keys.forEach { builder.suggest(it) }.let { builder.buildFuture() }
                                     }
-                                    .executes(updHandle(s))
-                                )
-                            )
-                        }.apply {
-                            then(literal("list")
-                                .executes(selHandle)
-                                .then(argument("customGroupName", StringArgumentType.greedyString())
-                                    .suggests { _, builder ->
-                                        customGroup.keys.forEach { builder.suggest(it) }.let { builder.buildFuture() }
-                                    }
-                                    .executes(resetGroup)
+                                    .executes(when(s.first){list->resetGroup else->updHandle(s.first)})
                                 )
                             )
                         }
