@@ -21,12 +21,13 @@ class CommandHandle {
                     val add = "add"
                     val del = "del"
                     val list = "list"
+                    val groupNamePattern = Regex("""^[\p{L}\p{N}_]+$""")
                     val getInput: (CommandContext<FabricClientCommandSource>)->String = { it.nodes.last().range.get(it.input) }
                     val updHandle: (String) -> (CommandContext<FabricClientCommandSource>) -> Int = { opt ->
                         code@{ pack ->
                             val name = getInput(pack)
-                                .takeIf { "^[a-z0-9_]*$".toRegex().matches(it) } ?: run {
-                                pack.source.sendFeedback(Text.literal("自定义标签组名应仅包含数字,小写字母,下划线!"))
+                                .takeIf { groupNamePattern.matches(it) } ?: run {
+                                pack.source.sendFeedback(Text.literal("自定义标签组名应仅包含连续的文字,数字,或下划线!"))
                                 return@code -1
                             }
                             val groupName = "custom:${name}"
@@ -68,7 +69,7 @@ class CommandHandle {
                     val resetGroup: (CommandContext<FabricClientCommandSource>) -> Int = { pack->
                         val input = getInput(pack)
                         customGroup.entries
-                            .find { it.key == input }
+                            .find { it.key.replaceFirst("custom:","") == input }
                             ?.takeIf { it.value.isNotEmpty() }
                             ?.also { currentItemGroup = ItemGroup(it.value.map { Item(id = it.id,count = it.count) }).apply {
                                 switchDisplay(true)
@@ -90,7 +91,7 @@ class CommandHandle {
                             acc.then(
                                 literal(s.first).then(argument("customGroupName", StringArgumentType.greedyString())
                                     .suggests { _, builder ->
-                                        customGroup.keys.forEach { builder.suggest(it) }.let { builder.buildFuture() }
+                                        customGroup.keys.forEach { builder.suggest(it.replaceFirst("custom:","")) }.let { builder.buildFuture() }
                                     }
                                     .executes(when(s.first){list->resetGroup else->updHandle(s.first)})
                                 )
