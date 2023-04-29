@@ -143,7 +143,7 @@ class HudData {
                                 inter.clickSlot(player.currentScreenHandler.syncId, slotId, button, mode, client.player)
                             }
                             inventory.getSlotWithStack(ItemStack(it))
-                                .takeIf { it >= 0 }
+                                .takeIf { it >= 0 && it != player.inventory.selectedSlot }
                                 ?.also{
                                     click(handSlot, 0, SlotActionType.QUICK_MOVE)
                                     click(it+when(it){ in 0..8 ->36 else->0 }, 0, SlotActionType.PICKUP)
@@ -157,10 +157,10 @@ class HudData {
         val offset: (Int) -> Pair<Int, Item> = run {
             var cursor = (items.size+1)/2
             val player = MinecraftClient.getInstance().player
-            val isChanged: (Int,Boolean) -> Boolean = run {
-                var prev: Pair<Int, Boolean>? = null
-                { offset, isEmpty ->
-                    val curr = Pair(offset, isEmpty)
+            val isChanged: (String,Boolean) -> Boolean = run {
+                var prev: Pair<String, Boolean>? = null
+                { id, isEmpty ->
+                    val curr = Pair(id, isEmpty)
                     if (prev == curr) {
                         false
                     } else {
@@ -176,7 +176,7 @@ class HudData {
                             Hand.MAIN_HAND->player?.mainHandStack
                             Hand.OFF_HAND->player?.offHandStack
                         }
-                        ?.takeIf{ switchDisplay(false) && offset!=0 && isChanged(offset,it.isEmpty) }
+                        ?.takeIf{ switchDisplay(false) && isChanged(rt.second.id,it.isEmpty) || offset!=0 }
                         ?.let{ switchItem(rt.second.item,rt.second.count) }
                     }
             }
