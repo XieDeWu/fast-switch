@@ -12,24 +12,38 @@ import org.lwjgl.glfw.GLFW
 @Suppress("NestedLambdaShadowedImplicitParameter")
 class KeyHandle {
     companion object{
+        val getItemStack:(Int)->ItemStack = run@{ slot->
+            val inventory = MinecraftClient.getInstance().player?.inventory ?: return@run ItemStack.EMPTY
+            inventory.getStack(slot).takeIf {
+                !(inventory.selectedSlot == slot && inventory.mainHandStack.isEmpty)
+            } ?: run {
+                val client = MinecraftClient.getInstance()
+                val world = client.world
+                val player = client.player
+                if (client == null || world == null || player == null) return@run ItemStack.EMPTY
+                player.raycast(20.0, 0f, false)
+                    .let { it as? BlockHitResult }
+                    ?.let { world.getBlockState(it.blockPos).block.asItem() }
+                    ?.let { ItemStack(it) }
+                    ?: ItemStack.EMPTY
+            }
+        }
+        val addCurrentToList:(Int)->Unit = addToLast@{ offset->
+            val player = MinecraftClient.getInstance().player?.inventory ?: return@addToLast
+            getItemStack(((player.selectedSlot+offset)%9+9)%9)
+                .also { if (it.isEmpty) return@addToLast }
+                .also {
+                    val curItems = currentItemGroup.let { when(it.switchDisplay(false)){ true->it.items false-> listOf() } }
+                    currentItemGroup = HudData.ItemGroup(
+                        items = curItems + HudData.Item(id = it.registryEntry.key.get().value.toString(),count = it.count)
+                    ).apply {
+                        switchDisplay(true)
+                        offset(9999)
+                    }
+                }
+        }
         @Suppress("RedundantUnitExpression")
         fun registry(){
-            val getItemStack:(Int)->ItemStack = run@{ slot->
-                val inventory = MinecraftClient.getInstance().player?.inventory ?: return@run ItemStack.EMPTY
-                inventory.getStack(slot).takeIf {
-                    !(inventory.selectedSlot == slot && inventory.mainHandStack.isEmpty)
-                } ?: run {
-                    val client = MinecraftClient.getInstance()
-                    val world = client.world
-                    val player = client.player
-                    if (client == null || world == null || player == null) return@run ItemStack.EMPTY
-                    player.raycast(20.0, 0f, false)
-                        .let { it as? BlockHitResult }
-                        ?.let { world.getBlockState(it.blockPos).block.asItem() }
-                        ?.let { ItemStack(it) }
-                        ?: ItemStack.EMPTY
-                }
-            }
             KeyData.keyState[GLFW.GLFW_KEY_LEFT_ALT]?.apply {
                 onShortClick = {
                     currentItemGroup.switchDisplay(true)
@@ -111,19 +125,7 @@ class KeyHandle {
                         currentItemGroup.recomputeOrderNext(true)
                     } }
                 }
-                onLongPressOne = { run addToLast@{
-                    val player = MinecraftClient.getInstance().player?.inventory ?: return@addToLast
-                    getItemStack(player.selectedSlot)
-                        .also { if (it.isEmpty) return@addToLast }
-                        .also {
-                            currentItemGroup = HudData.ItemGroup(
-                                items = currentItemGroup.items + HudData.Item(it.registryEntry.key.get().value.toString())
-                            ).apply {
-                                switchDisplay(true)
-                                offset(9999)
-                            }
-                        }
-                } }
+                onLongPressOne = { addCurrentToList(0) }
             }
         }
     }
