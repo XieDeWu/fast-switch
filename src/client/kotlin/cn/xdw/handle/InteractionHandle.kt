@@ -1,7 +1,6 @@
 package cn.xdw.handle
 
 import cn.xdw.data.HudData
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Hand
@@ -11,16 +10,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable
 class InteractionHandle {
     companion object{
         fun interactBlock(player: ClientPlayerEntity, hand: Hand, blockHitResult: BlockHitResult, info: CallbackInfoReturnable<ActionResult>) {
-            val result = info.returnValue
-            val world = MinecraftClient.getInstance().world?:return
-            val group = HudData.currentItemGroup
-            if(world.isClient
-                && (hand == Hand.MAIN_HAND)
-                && result.isAccepted
+            val group = HudData.currentItemGroup.apply { workHand(hand) }
+            if(player.clientWorld.isClient
+                && info.returnValue.isAccepted
                 && group.switchDisplay(false)
-            ){
-                group.nextItem()
-            }
+            ){ group.apply {
+                nextItem()
+                when(hand){ Hand.MAIN_HAND->player.mainHandStack.isEmpty; Hand.OFF_HAND->player.offHandStack.isEmpty }
+                    .takeIf { it }?.let { switchItem(offset(0).second.item,offset(0).second.count) }
+            } }
         }
     }
 }

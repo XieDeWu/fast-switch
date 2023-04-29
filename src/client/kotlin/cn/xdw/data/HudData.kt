@@ -14,6 +14,7 @@ import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket
 import net.minecraft.registry.Registries
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.text.Text
+import net.minecraft.util.Hand
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler
 import net.minecraft.util.math.random.LocalRandom
@@ -118,24 +119,36 @@ class HudData {
                 display
             }
         },
-        val switchItem: (MItem,Int)->Unit = { it,count->
+        val workHand: (Hand?) -> Hand = run {
+            var hand = Hand.MAIN_HAND
+            {
+                it?.also{ hand = it }
+                hand
+            }
+        },
+        val switchItem: (MItem,Int)->Unit = { item,count->
             val client = MinecraftClient.getInstance()
             val player = client.player
             val inventory = player?.inventory
             val inter = client.interactionManager
             when{
                 client!=null && player!=null && inventory!=null && inter !=null ->{
+                    val handSlot = when(workHand(null)){ Hand.MAIN_HAND->inventory.selectedSlot + 36; Hand.OFF_HAND->45 }
                     when{
                         player.isCreative->{
-                            player.networkHandler.sendPacket(CreativeInventoryActionC2SPacket(inventory.selectedSlot + 36, ItemStack(it,count)))
+                            player.networkHandler.sendPacket(CreativeInventoryActionC2SPacket(handSlot, ItemStack(item,count)))
                         }
                         else->{
-                            inter.clickSlot(player.currentScreenHandler.syncId, inventory.selectedSlot + 36, 0, SlotActionType.QUICK_MOVE, client.player)
-                            player.dropSelectedItem(true)
-                            val slot: Int = inventory.getSlotWithStack(ItemStack(it))
-                            if (slot>=0 && slot!= inventory.selectedSlot) {
-                                inter.pickFromInventory(slot)
+                            val click:(Int,Int,SlotActionType)->Unit = { slotId,button,mode->
+                                inter.clickSlot(player.currentScreenHandler.syncId, slotId, button, mode, client.player)
                             }
+                            inventory.main.indexOfFirst { it.isEmpty.not() && it.isOf(item) }
+                                .takeIf { it >= 0 && it != player.inventory.selectedSlot }
+                                ?.also{
+                                    click(handSlot, 0, SlotActionType.QUICK_MOVE)
+                                    click(it+when(it){ in 0..8 ->36 else->0 }, 0, SlotActionType.PICKUP)
+                                    click(handSlot, 0, SlotActionType.PICKUP)
+                                }
                         }
                     }
                 }
@@ -143,11 +156,29 @@ class HudData {
         },
         val offset: (Int) -> Pair<Int, Item> = run {
             var cursor = (items.size+1)/2
-            {
-                cursor = (cursor+it).coerceIn(items.indices)
-                val rt = cursor to items[cursor]
-                if(it!=0) switchItem(rt.second.item,rt.second.count)
-                rt
+            val player = MinecraftClient.getInstance().player
+            val isChanged: (String,Boolean) -> Boolean = run {
+                var prev: Pair<String, Boolean>? = null
+                { id, isEmpty ->
+                    val curr = Pair(id, isEmpty)
+                    if (prev == curr) {
+                        false
+                    } else {
+                        prev = curr
+                        true
+                    }
+                }
+            };
+            { offset->
+                cursor = (cursor+offset).coerceIn(items.indices)
+                (cursor to items[cursor])
+                    .also { rt-> when(workHand(null)){
+                            Hand.MAIN_HAND->player?.mainHandStack
+                            Hand.OFF_HAND->player?.offHandStack
+                        }
+                        ?.takeIf{ switchDisplay(false) && isChanged(rt.second.id,it.isEmpty) || offset!=0 }
+                        ?.let{ switchItem(rt.second.item,rt.second.count) }
+                    }
             }
         },
         val offsetByName: (String) -> Boolean = { name->
