@@ -105,7 +105,8 @@ class HudData {
     }
     enum class RandomMode{
         NULL_RANDOM,
-        ORDER_CHOOSE,
+        ORDER_GROUP,
+        RANDOM_GROUP,
         PERLIN_RANDOM,
         FULL_RANDOM,
     }
@@ -191,7 +192,8 @@ class HudData {
             var count = 0
             val map = listOf(
                 NULL_RANDOM to "无随机",
-                ORDER_CHOOSE to "顺序选取",
+                ORDER_GROUP to "顺序组",
+                RANDOM_GROUP to "随机组",
                 PERLIN_RANDOM to "柏林随机",
                 FULL_RANDOM to "完全随机",
             );
@@ -210,12 +212,23 @@ class HudData {
             }
         },
         val nextItem: ()->Unit = run {
-            val orderNext: ()->()->Unit by lazy{ { run {
+            val orderGroup: ()->()->Unit by lazy{ { run {
                 val placeList = items.foldIndexed(listOf<Int>()) { index, acc, i -> acc + List(i.count) { index } }
                 var count = items.filterIndexed{ index, _ -> index in 0 until offset(0).first }.sumOf { it.count };
                 {
                     count += 1
                     offset(placeList[count % placeList.size] - offset(0).first)
+                }
+            } } }
+            val randomGroup: ()->()->Unit by lazy{ { run {
+                var count = 0;
+                {
+                    count += 1
+                    val cur = offset(0)
+                    if(count % cur.second.count == 0) {
+                        count = 0
+                        offset(Random.nextInt(items.indices) - cur.first)
+                    }
                 }
             } } }
             val perlinNext:()->Unit = run {
@@ -252,16 +265,19 @@ class HudData {
             val fullNext:()->Unit = {
                 offset(Random.nextInt(items.indices)-offset(0).first)
             }
-            var curOrderNext = orderNext();
+            var curOrderGroup = orderGroup();
+            var curRandomGroup = randomGroup();
             {
                 when(modeSwitch(0).also {
                     if(recomputeOrderNext(null)){
-                        curOrderNext = orderNext()
+                        curOrderGroup = orderGroup()
+                        curRandomGroup = randomGroup()
                         recomputeOrderNext(false)
                     }
                 }){
                     NULL_RANDOM -> Unit
-                    ORDER_CHOOSE -> curOrderNext()
+                    ORDER_GROUP -> curOrderGroup()
+                    RANDOM_GROUP -> curRandomGroup()
                     PERLIN_RANDOM ->perlinNext()
                     FULL_RANDOM ->fullNext()
                 }
