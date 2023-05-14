@@ -105,6 +105,8 @@ class KeyHandle {
                                     }
                                     .apply {
                                         addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(originAffix) } )
+                                    }.apply {
+                                        addAll(HudData.customGroup.filter { it.key.contains(originAffix) }.values.flatMap { it.map { it.id } })
                                     }.toSortedSet()
                                     .takeIf { it.isNotEmpty() }
                                     ?.map { HudData.Item(it) }
