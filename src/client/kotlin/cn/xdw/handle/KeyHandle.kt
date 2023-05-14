@@ -3,6 +3,7 @@ package cn.xdw.handle
 import cn.xdw.data.HudData
 import cn.xdw.data.HudData.Companion.currentItemGroup
 import cn.xdw.data.KeyData
+import com.google.common.collect.Iterables.addAll
 import net.minecraft.client.MinecraftClient
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
@@ -98,18 +99,18 @@ class KeyHandle {
                             it.switchDisplay(false) -> {
                                 val regex = Regex("^\\*|\\*\$")
                                 val originAffix = oldAffix.replace(regex,"")
-                                sortedSetOf<String>()
+                                sortedMapOf<String,Int>()
                                     .apply groupItems@{
                                         if (oldItem.affixOffset(0).first != 0) return@groupItems
-                                        addAll(HudData.tagItem().filter { it.key.contains(originAffix) }.values.flatten())
+                                        putAll(HudData.tagItem().filter { it.key.contains(originAffix) }.values.flatten().associateWith { 1 })
                                     }
                                     .apply {
-                                        addAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(originAffix) } )
-                                    }.apply {
-                                        addAll(HudData.customGroup.filter { it.key.contains(originAffix) }.values.flatMap { it.map { it.id } })
-                                    }.toSortedSet()
-                                    .takeIf { it.isNotEmpty() }
-                                    ?.map { HudData.Item(it) }
+                                        putAll(HudData.tagItem().values.flatten().toSortedSet().filter { it.contains(originAffix) }.associateWith { 1 } )
+                                    }.toMutableMap()
+                                    .apply {
+                                        putAll(HudData.customGroup.filter { it.key.contains(originAffix) }.values.flatMap { it.map { it.id to it.count } })
+                                    }.takeIf { it.isNotEmpty() }
+                                    ?.map { HudData.Item(id = it.key,count = it.value) }
                                     ?.filter { it.item != Items.AIR }
                                     ?.takeIf { it.isNotEmpty() }
                                     ?.let { newGroupBuild(it) }
